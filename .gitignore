@@ -46,3 +46,10 @@ Thumbs.db
 # ── تحقيقات محلية ──
 *.hprof
 *.log
+
+# ── من قالب GitHub لأندرويد ──
+.externalNativeBuild/
+output-metadata.json
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
