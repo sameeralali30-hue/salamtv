@@ -18,4 +18,8 @@
     <string name="salamtv_login_help">Accounts are issued by your reseller. Contact them to subscribe or renew.</string>
     <string name="salamtv_sign_out">Sign out</string>
     <string name="salamtv_sign_out_confirm">Sign out of this device? Your channels will be removed until you sign in again.</string>
+    <string name="salamtv_based_on">Based on OwnTV by ahXN00, under GPLv3.</string>
+    <string name="salamtv_support">Support</string>
+    <string name="salamtv_support_scan">Scan the code with your phone to open our support channel.</string>
+    <string name="salamtv_support_qr">Support channel QR code</string>
 </resources>

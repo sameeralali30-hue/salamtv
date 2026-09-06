@@ -10,4 +10,8 @@
     <string name="salamtv_login_help">الحسابات تُنشأ من الموزّع. تواصل معه للاشتراك أو التجديد.</string>
     <string name="salamtv_sign_out">تسجيل الخروج</string>
     <string name="salamtv_sign_out_confirm">تسجيل الخروج من هذا الجهاز؟ ستُزال القنوات حتى تسجّل الدخول مرّة أخرى.</string>
+    <string name="salamtv_based_on">مبني على OwnTV من ahXN00، بترخيص GPLv3.</string>
+    <string name="salamtv_support">الدعم</string>
+    <string name="salamtv_support_scan">امسح الرمز بهاتفك لفتح قناة الدعم.</string>
+    <string name="salamtv_support_qr">رمز QR لقناة الدعم</string>
 </resources>

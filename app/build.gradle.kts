@@ -100,6 +100,23 @@ android {
             ?: "https://salamtv1.mohamedalalichatbot.xyz/iptv/app_login.php"
         buildConfigField("String", "SALAMTV_LOGIN_URL", "\"$loginUrl\"")
 
+        // ── SalamTV: identity shown in About ──
+        // The support channel is a business fact, not a code fact: it changes when the operator
+        // changes it, and a wrong one sends a paying subscriber to a stranger's inbox. Blank hides
+        // the whole block rather than showing something misleading.
+        val supportUrl = System.getenv("SALAMTV_SUPPORT_URL")
+            ?: providers.gradleProperty("salamtv.supportUrl").orNull
+            ?: ""
+        buildConfigField("String", "SALAMTV_SUPPORT_URL", "\"$supportUrl\"")
+
+        val waNumber = System.getenv("SALAMTV_WHATSAPP")
+            ?: providers.gradleProperty("salamtv.whatsapp").orNull
+            ?: ""
+        buildConfigField("String", "SALAMTV_WHATSAPP", "\"$waNumber\"")
+
+        // Public source, as GPL-3 requires of anyone who hands out the APK.
+        buildConfigField("String", "SALAMTV_SOURCE_URL", "\"github.com/sameeralali30-hue/salamtv\"")
+
         // Locked mode: the subscriber signs in, and never picks a server or adds a playlist.
         // Off in a build with no login URL, so the upstream player behaviour still works.
         buildConfigField("boolean", "SALAMTV_LOCKED", loginUrl.isNotBlank().toString())

@@ -2005,8 +2005,20 @@ private fun FocusHighlightDialog(
 }
 
 
-private const val GITHUB_REPO = "github.com/ahXN00/OwnTV"
-private const val TELEGRAM_LINK = "t.me/owntvplayer"
+/** Our source, as GPL-3 requires us to point recipients at. */
+private val GITHUB_REPO = tv.own.owntv.BuildConfig.SALAMTV_SOURCE_URL
+
+/**
+ * Operator support channel, injected at build time; blank hides the whole block.
+ *
+ * It used to be upstream's own Telegram group. Left in place, every subscriber who opened About and
+ * needed help would have walked into a stranger's community asking about a subscription nobody
+ * there sold them. Showing nothing is strictly better than showing the wrong address.
+ */
+private val SUPPORT_LINK = tv.own.owntv.BuildConfig.SALAMTV_SUPPORT_URL
+
+/** رقم واتساب، بصيغة يقرؤها الإنسان لا رابطاً — لا متصفّح على التلفاز. */
+private val WHATSAPP_LINK = tv.own.owntv.BuildConfig.SALAMTV_WHATSAPP
 
 /** About OwnTV: version, license, author and project link — all readable on screen (no TV browser). */
 @Composable
@@ -2038,33 +2050,42 @@ private fun AboutDialog(onDismiss: () -> Unit) {
             Spacer(Modifier.height(4.dp))
             Text(GITHUB_REPO, style = MaterialTheme.typography.bodyMedium, color = colors.primary)
             Spacer(Modifier.height(16.dp))
-            // Community: Telegram link + a QR, side-by-side to keep the dialog compact, so TV users can
-            // join from their phone — no TV browser needed.
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.settings_join_telegram), style = MaterialTheme.typography.titleSmall, color = colors.onSurface)
-                    Spacer(Modifier.height(2.dp))
-                    Text(TELEGRAM_LINK, style = MaterialTheme.typography.bodyMedium, color = colors.primary)
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        stringResource(R.string.settings_telegram_scan),
-                        style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
-                    )
-                }
-                Box(Modifier.clip(RoundedCornerShape(10.dp)).background(Color.White).padding(6.dp)) {
-                    Image(
-                        painter = androidx.compose.ui.res.painterResource(tv.own.owntv.R.drawable.telegram_qr),
-                        contentDescription = stringResource(R.string.settings_telegram_qr),
-                        modifier = Modifier.size(120.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.height(16.dp))
+            // Credit upstream by name: this is a fork, GPL-3 asks that the origin stay visible,
+            // and a subscriber reading it should not mistake OwnTV's project for our support desk.
+            Spacer(Modifier.height(4.dp))
             Text(
-                stringResource(R.string.settings_contributions),
+                stringResource(R.string.salamtv_based_on),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
             )
+
+            if (SUPPORT_LINK.isNotBlank()) {
+                Spacer(Modifier.height(16.dp))
+                // القارئ على التلفاز لا متصفّح لديه: الرمز يُمسح بالهاتف.
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.salamtv_support), style = MaterialTheme.typography.titleSmall, color = colors.onSurface)
+                        Spacer(Modifier.height(2.dp))
+                        Text(SUPPORT_LINK, style = MaterialTheme.typography.bodyMedium, color = colors.primary)
+                        if (WHATSAPP_LINK.isNotBlank()) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(WHATSAPP_LINK, style = MaterialTheme.typography.bodyMedium, color = colors.primary)
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            stringResource(R.string.salamtv_support_scan),
+                            style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
+                        )
+                    }
+                    Box(Modifier.clip(RoundedCornerShape(10.dp)).background(Color.White).padding(6.dp)) {
+                        Image(
+                            painter = androidx.compose.ui.res.painterResource(tv.own.owntv.R.drawable.support_qr),
+                            contentDescription = stringResource(R.string.salamtv_support_qr),
+                            modifier = Modifier.size(120.dp),
+                        )
+                    }
+                }
+            }
             Spacer(Modifier.height(20.dp))
             OwnTVButton(stringResource(R.string.settings_close), onClick = onDismiss, modifier = Modifier.focusRequester(focus))
         }
