@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="salamtv_login_title">تسجيل الدخول</string>
+    <string name="salamtv_login_subtitle">أدخل اسم المستخدم وكلمة المرور من الموزّع.</string>
+    <string name="salamtv_login_username">اسم المستخدم</string>
+    <string name="salamtv_login_password">كلمة المرور</string>
+    <string name="salamtv_login_action">دخول</string>
+    <string name="salamtv_login_working">جارٍ الدخول…</string>
+    <string name="salamtv_login_offline">تعذّر الوصول إلى الخادم. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.</string>
+    <string name="salamtv_login_help">الحسابات تُنشأ من الموزّع. تواصل معه للاشتراك أو التجديد.</string>
+    <string name="salamtv_sign_out">تسجيل الخروج</string>
+    <string name="salamtv_sign_out_confirm">تسجيل الخروج من هذا الجهاز؟ ستُزال القنوات حتى تسجّل الدخول مرّة أخرى.</string>
+</resources>

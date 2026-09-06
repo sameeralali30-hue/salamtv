@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    SalamTV subscriber sign-in. App-module strings on purpose: this screen exists only in the
+    operator build, and core stays the generic player.
+
+    Business wording (expired / suspended / wrong password) is NOT here — it comes from the panel
+    so the operator can change it without shipping an app. Only what the panel can never answer
+    lives in this file.
+-->
+<resources>
+    <string name="salamtv_login_title">Sign in</string>
+    <string name="salamtv_login_subtitle">Enter the username and password from your reseller.</string>
+    <string name="salamtv_login_username">Username</string>
+    <string name="salamtv_login_password">Password</string>
+    <string name="salamtv_login_action">Sign in</string>
+    <string name="salamtv_login_working">Signing in…</string>
+    <string name="salamtv_login_offline">Could not reach the server. Check your internet connection and try again.</string>
+    <string name="salamtv_login_help">Accounts are issued by your reseller. Contact them to subscribe or renew.</string>
+    <string name="salamtv_sign_out">Sign out</string>
+    <string name="salamtv_sign_out_confirm">Sign out of this device? Your channels will be removed until you sign in again.</string>
+</resources>
