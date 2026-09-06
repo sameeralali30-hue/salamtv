@@ -182,6 +182,19 @@ fun SearchBar(
                         runCatching { pillFocus.requestFocus() }
                     }),
                 )
+
+                // اللمسة تصل إلى BasicTextField أوّلاً فيبتلعها، ولا تصل إلى clickable المحيط
+                // الذي يضبط `editing` — فيبقى canFocus=false ولا تظهر لوحة المفاتيح. طبقةٌ
+                // شفّافة تلتقط اللمسة الأولى ثمّ تزول، فتعمل اللمسات التالية داخل الحقل.
+                // (نفس العلاج في OwnTVTextField؛ العلّة واحدة.)
+                if (!editing) {
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .focusProperties { canFocus = false }
+                            .clickable(interactionSource = interaction, indication = null) { editing = true }
+                    )
+                }
             }
         }
     }

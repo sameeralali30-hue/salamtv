@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,6 +88,8 @@ fun OwnTVTextField(
     val interaction = remember { MutableInteractionSource() }
     val fieldFocused by interaction.collectIsFocusedAsState()
     var editing by remember { mutableStateOf(false) }
+    // True once the inner field has genuinely held focus — see onFocusChanged below.
+    var hadFocus by remember { mutableStateOf(false) }
     val pillFocus = remember { FocusRequester() }
     val innerFocus = remember { FocusRequester() }
     val bringIntoView = remember { BringIntoViewRequester() }
@@ -115,6 +118,13 @@ fun OwnTVTextField(
             // Tell the shared popup before showing the IME. If this TV publishes no inset/frame
             // change, the calibrated estimate still constrains the modal immediately.
             tvImeWatcher?.onImeRequested()
+            // Wait one frame before asking for focus. `canFocus = editing` only becomes true on
+            // the recomposition that this same flag triggers, so a requestFocus() issued in the
+            // same frame runs against canFocus=false and is silently dropped. On a remote that
+            // was survivable — focus was already on the pill next to it. On a touchscreen nothing
+            // holds focus at all, so the request failed, no view was ever served to the IME, and
+            // the field could not be typed into: keyboard never opened, only paste worked.
+            withFrameNanos { }
             runCatching { innerFocus.requestFocus() }
             keyboard?.show()
             kotlinx.coroutines.delay(120)
@@ -170,7 +180,14 @@ fun OwnTVTextField(
                     .bringIntoViewRequester(bringIntoView)
                     .focusRequester(innerFocus)
                         .focusProperties { canFocus = editing }
-                        .onFocusChanged { if (editing && !it.isFocused) editing = false }
+                        // Only leave editing once focus has actually been held and then lost.
+                        // The first callback after `editing` flips arrives with isFocused=false —
+                        // treating that as "focus lost" reset the flag immediately and undid the
+                        // focus request that was still in flight.
+                        .onFocusChanged {
+                            if (it.isFocused) hadFocus = true
+                            else if (hadFocus) { hadFocus = false; editing = false }
+                        }
                         .onPreviewKeyEvent {
                             if (it.key == Key.Back) {
                                 if (it.type == KeyEventType.KeyUp) {
@@ -202,6 +219,27 @@ fun OwnTVTextField(
                         }
                     },
                 )
+
+                // ═══ لماذا طبقةٌ فوق الحقل ═══
+                //
+                // اللمسة على حقل نصّ تصل إلى BasicTextField أولاً، وهو يبتلعها (يستخدمها
+                // لوضع المؤشّر) فلا تصل أبداً إلى clickable الموضوع على الحاوية — والحاوية
+                // هي التي تضبط `editing`. وبما أنّ `canFocus = editing` يبقى false، لا يُخدَم
+                // أيّ عرضٍ للوحة المفاتيح: لا تظهر اللوحة، ولا يُكتَب حرف، ويبقى اللصق
+                // الطريقة الوحيدة لملء الحقل. على الريموت لم يظهر العطل لأنّ زرّ OK حدث
+                // مفتاحٍ لا لمسة، فيمرّ إلى clickable مباشرة.
+                //
+                // فنضع طبقةً شفّافة تلتقط اللمسة الأولى قبل الحقل. وتزول فور بدء التحرير،
+                // فتذهب اللمسات التالية إلى الحقل نفسه لوضع المؤشّر وتحديد النصّ كالمعتاد.
+                // وهي غير قابلة للتركيز حتى لا تضيف محطّةً زائدة في مسار الريموت.
+                if (!editing) {
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .focusProperties { canFocus = false }
+                            .clickable(interactionSource = interaction, indication = null) { editing = true }
+                    )
+                }
             }
 
             if (isPassword) {

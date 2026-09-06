@@ -303,7 +303,7 @@ internal fun CenterControls(
 @Composable
 internal fun BottomBar(
     player: PlaybackEngine, isLive: Boolean, position: Long, duration: Long,
-    volume: Int, audioCount: Int, subCount: Int, zoomMode: ZoomMode, speedLabel: String,
+    volume: Int, audioCount: Int, subCount: Int, qualityCount: Int, zoomMode: ZoomMode, speedLabel: String,
     onScrubLive: ((Int) -> Unit)?, timeshiftOffsetSec: Int?, onGoToLive: (() -> Unit)?, onOpenJumpBack: (() -> Unit)?,
     liveProgrammes: List<LiveProgramme> = emptyList(),
     compatMode: Boolean?, onToggleCompatMode: (() -> Unit)?,
@@ -371,6 +371,12 @@ internal fun BottomBar(
                 SpeedButton(label = speedLabel, active = speedLabel != stringResource(R.string.player_speed_normal_short), toolLabel = stringResource(R.string.player_tool_speed)) { onOpenDialog(HudDialog.SPEED) }
                 CtrlButton(OwnTVIcon.SUBTITLE, badge = subCount.takeIf { it > 0 }, label = stringResource(R.string.player_tool_subtitles)) { onOpenDialog(HudDialog.SUBS) }
                 CtrlButton(OwnTVIcon.AUDIO, badge = audioCount.takeIf { it > 1 }, label = stringResource(R.string.player_tool_audio)) { onOpenDialog(HudDialog.AUDIO) }
+                // Quality appears only when the stream actually offers a ladder. A single-rendition
+                // channel gets no button: a menu with one entry reads as "your connection is the
+                // problem" when the limit is the source's.
+                if (qualityCount > 1) {
+                    CtrlButton(OwnTVIcon.VIDEO, badge = qualityCount, label = stringResource(R.string.salamtv_quality)) { onOpenDialog(HudDialog.QUALITY) }
+                }
                 // Favorite the current channel/movie/series without leaving the stream (coral heart = on,
                 // the same colour the marker has on posters and in browse rows).
                 if (onToggleFavorite != null) CtrlButton(OwnTVIcon.FAVORITE, active = favorite, activeTint = OwnTVTheme.colors.favorite, label = stringResource(R.string.player_tool_favorite)) { onToggleFavorite() }

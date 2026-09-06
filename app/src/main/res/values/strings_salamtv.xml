@@ -22,4 +22,5 @@
     <string name="salamtv_support">Support</string>
     <string name="salamtv_support_scan">Scan the code with your phone to open our support channel.</string>
     <string name="salamtv_support_qr">Support channel QR code</string>
+    <string name="salamtv_quality">Quality</string>
 </resources>

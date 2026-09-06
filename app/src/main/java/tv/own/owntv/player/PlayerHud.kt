@@ -115,7 +115,7 @@ private const val PLAYER_SHORTCUT_LONG_PRESS_MS = 600L
 private const val TRACK_POLL_MS = 300L
 private const val TRACK_POLL_TRIES = 20
 
-internal enum class HudDialog { NONE, AUDIO, SUBS, SPEED, ZOOM, VOLUME, SUB_TIMING, JUMP_BACK }
+internal enum class HudDialog { NONE, AUDIO, SUBS, QUALITY, SPEED, ZOOM, VOLUME, SUB_TIMING, JUMP_BACK }
 
 /** What the top-left channel OSD shows for direct tune: the digits being typed, the channel a number
  *  resolved to, or a failure message. All three render as the same card as the channel OSD. */
@@ -211,6 +211,7 @@ fun PlayerHud(
     val streamChips by player.streamChips.collectAsStateWithLifecycle()
     val engineChip by player.engineChip.collectAsStateWithLifecycle()
     val audioCount by player.audioCount.collectAsStateWithLifecycle()
+    val qualityCount by player.qualityCount.collectAsStateWithLifecycle()
     val audioDelayMs by player.audioDelayMs.collectAsStateWithLifecycle()
     val audioDelayRemembered by player.audioDelayRemembered.collectAsStateWithLifecycle()
     val subCount by player.subCount.collectAsStateWithLifecycle()
@@ -608,7 +609,8 @@ fun PlayerHud(
 
                 BottomBar(
                     player = player, isLive = isLive, position = position, duration = duration,
-                    volume = volume, audioCount = audioCount, subCount = subCount, zoomMode = zoomMode,
+                    volume = volume, audioCount = audioCount, subCount = subCount,
+                    qualityCount = qualityCount, zoomMode = zoomMode,
                     speedLabel = formatSpeed(speed),
                     onScrubLive = onScrubLive, timeshiftOffsetSec = timeshiftOffset, onGoToLive = onGoToLive,
                     liveProgrammes = liveProgrammes,
@@ -778,6 +780,25 @@ fun PlayerHud(
                 // Subtitle timing (plan §8): only when adjustment applies to the ACTIVE subtitle on the
                 // current engine (any mpv text sub; external side-loads on ExoPlayer).
                 onSubtitleTiming = if (player.subtitleTimingAvailable()) ({ dialog = HudDialog.SUB_TIMING }) else null,
+            )
+        }
+        HudDialog.QUALITY -> {
+            // Same poll the audio/subtitle dialogs use: the ladder only exists once the engine has
+            // parsed the manifest, which can land after the HUD opens.
+            var videoTracks by remember { mutableStateOf(player.videoTracks()) }
+            LaunchedEffect(Unit) {
+                repeat(TRACK_POLL_TRIES) {
+                    if (videoTracks.isNotEmpty()) return@LaunchedEffect
+                    delay(TRACK_POLL_MS)
+                    videoTracks = player.videoTracks()
+                }
+            }
+            TrackDialog(
+                stringResource(R.string.salamtv_quality), videoTracks,
+                onSelect = { player.selectVideo(it.mpvId); dialog = HudDialog.NONE },
+                // "Automatic" is the Off row: ABR is the default state, not the absence of one.
+                onOff = { player.selectVideo(-1); dialog = HudDialog.NONE },
+                onDismiss = { dialog = HudDialog.NONE },
             )
         }
         HudDialog.SUB_TIMING -> SubtitleTimingDialog(player, onDismiss = { dialog = HudDialog.NONE })

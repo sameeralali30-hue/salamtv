@@ -1400,6 +1400,19 @@ fun OwnTVShell(
                 updateManager.check()
             }
         }
+        // Auto-download: the startup card reports progress instead of waiting to be pressed.
+        // `autoStarted` is what keeps this from looping — a refused install returns the state to
+        // Available, and without the latch we would download the same APK again immediately.
+        val updateState by updateManager.state.collectAsStateWithLifecycle()
+        var autoStarted by remember { mutableStateOf(false) }
+        LaunchedEffect(updateState) {
+            if (tv.own.owntv.core.settings.SalamTvDefaults.AUTO_INSTALL_UPDATES &&
+                !autoStarted && showStartupToast && updateState is UpdateManager.State.Available
+            ) {
+                autoStarted = true
+                updateManager.downloadAndInstall()
+            }
+        }
         if (showChangelog) {
             // Full "What's New" changelog (same dialog the manual Settings check uses), shown when
             // the startup card's "What's New" is pressed. No re-check — the release is already loaded.
