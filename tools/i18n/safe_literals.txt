@@ -130,6 +130,7 @@
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	engine: $message
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	ensurePlaying history profile=$pid channelId=${channel.id}
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	ensurePlaying history record failed channelId=${channel.id} profile=$pid
+1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	exo tune url:
 3	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	exoplayer
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	exoplayer (drm)
 4	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	mpv
@@ -639,6 +640,7 @@
 1	technical	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	?
 1	protocol	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	exoplayer
 1	protocol	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	mpv
+1	technical	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	p
 1	technical	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	position: $reportPosition${reportDuration?.let { " / $it" }.orEmpty()}
 3	empty	app/src/main/java/tv/own/owntv/player/PlayerHudChrome.kt	\0
 2	technical	app/src/main/java/tv/own/owntv/player/PlayerHudChrome.kt	?

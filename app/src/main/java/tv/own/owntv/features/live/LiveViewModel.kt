@@ -1178,9 +1178,17 @@ class LiveViewModel(
     /** The URL to actually tune for [channel]: [playStreamUrl] — i.e. the playlist's "Prefer HLS" `.ts`
      *  → `.m3u8` swap — except on a channel already caught having no working `.m3u8`, which goes back
      *  to the `.ts` its panel does serve. See [LiveStreamQuirks.rememberNoHlsVariant]. */
-    private fun tuneUrl(channel: ChannelEntity, source: SourceEntity?): String =
-        if (forceTsForExo == channel.streamUrl || LiveStreamQuirks.lacksHlsVariant(channel.streamUrl)) channel.streamUrl
-        else channel.playStreamUrl(source)
+    private fun tuneUrl(channel: ChannelEntity, source: SourceEntity?): String {
+        val url = if (forceTsForExo == channel.streamUrl || LiveStreamQuirks.lacksHlsVariant(channel.streamUrl)) {
+            channel.streamUrl
+        } else {
+            channel.playStreamUrl(source)
+        }
+        // Which rung actually ran is the first thing to know when the quality menu is missing:
+        // a `.ts` tune carries one rendition, so there is nothing to choose between.
+        android.util.Log.i("LiveEngine", "exo tune url: " + url.substringAfterLast('/'))
+        return url
+    }
 
     /** The channel whose ladder is on an explicit `.ts` rung, so [tuneUrl] serves the original stream
      *  even before the "no HLS variant" lesson has been written (the rung must not depend on that order).

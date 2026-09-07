@@ -617,6 +617,7 @@ fun PlayerHud(
                     onOpenJumpBack = if (onJumpBack != null) { { dialog = HudDialog.JUMP_BACK } } else null,
                     compatMode = compatMode, onToggleCompatMode = toggleCompat,
                     vodOnExo = vodOnExo, onToggleVodEngine = toggleVod,
+                    onOpenChannelList = onOpenChannelList,
                     onInfo = { showInfo = !showInfo }, infoOn = showInfo,
                     onReport = {
                         val meta = player.currentMeta.value
@@ -794,10 +795,13 @@ fun PlayerHud(
                 }
             }
             TrackDialog(
-                stringResource(R.string.salamtv_quality), videoTracks,
+                stringResource(R.string.salamtv_quality),
+                // "1080" alone reads as a number; "1080p" reads as a picture quality.
+                videoTracks.map { it.copy(label = it.label + "p") },
                 onSelect = { player.selectVideo(it.mpvId); dialog = HudDialog.NONE },
                 // "Automatic" is the Off row: ABR is the default state, not the absence of one.
                 onOff = { player.selectVideo(-1); dialog = HudDialog.NONE },
+                offLabel = stringResource(R.string.salamtv_quality_auto),
                 onDismiss = { dialog = HudDialog.NONE },
             )
         }

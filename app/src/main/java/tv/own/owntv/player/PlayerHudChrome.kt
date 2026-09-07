@@ -310,6 +310,7 @@ internal fun BottomBar(
     vodOnExo: Boolean?, onToggleVodEngine: (() -> Unit)?,
     onInfo: (() -> Unit)? = null, infoOn: Boolean = false, onReport: (() -> Unit)? = null,
     favorite: Boolean = false, onToggleFavorite: (() -> Unit)? = null,
+    onOpenChannelList: (() -> Unit)? = null,
     onOpenDialog: (HudDialog) -> Unit, onPip: (() -> Unit)?, onAudioMode: (() -> Unit)?, onBack: () -> Unit, modifier: Modifier = Modifier,
 ) {
     val seekStep by player.seekStepMs.collectAsStateWithLifecycle() // Settings -> Seek step
@@ -366,6 +367,16 @@ internal fun BottomBar(
                 // channel, so onScrubLive is what says the channel has an archive at all.
                 if (onGoToLive != null && onScrubLive != null) {
                     GoLivePill(enabled = (timeshiftOffsetSec ?: 0) > 1) { onGoToLive() }
+                }
+                // ═══ قائمة القنوات باللمس ═══
+                //
+                // كان فتحها معلّقاً بزرّ اتجاهٍ في الريموت وحده. فمن يشاهد على هاتف لا
+                // يملك أيّ وسيلة لتبديل قناة إلا الخروج من المشغّل والدخول إليه ثانيةً —
+                // وهذا أكثر ما يفعله مشاهد التلفاز، فصار أثقل شيء في التطبيق.
+                //
+                // تصدّر الصفّ لأنّها الأكثر استعمالاً بين كلّ ما فيه.
+                if (onOpenChannelList != null) {
+                    CtrlButton(OwnTVIcon.LIVE_TV, label = stringResource(R.string.salamtv_channels)) { onOpenChannelList() }
                 }
                 CtrlButton(volumeIcon(volume), label = stringResource(R.string.player_tool_volume)) { onOpenDialog(HudDialog.VOLUME) }
                 SpeedButton(label = speedLabel, active = speedLabel != stringResource(R.string.player_speed_normal_short), toolLabel = stringResource(R.string.player_tool_speed)) { onOpenDialog(HudDialog.SPEED) }

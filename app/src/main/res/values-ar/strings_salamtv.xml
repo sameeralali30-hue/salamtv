@@ -15,4 +15,6 @@
     <string name="salamtv_support_scan">امسح الرمز بهاتفك لفتح قناة الدعم.</string>
     <string name="salamtv_support_qr">رمز QR لقناة الدعم</string>
     <string name="salamtv_quality">الجودة</string>
+    <string name="salamtv_channels">القنوات</string>
+    <string name="salamtv_quality_auto">تلقائي</string>
 </resources>

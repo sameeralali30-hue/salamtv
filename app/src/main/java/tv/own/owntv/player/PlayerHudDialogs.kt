@@ -64,6 +64,9 @@ internal fun TrackDialog(
     tracks: List<TrackOption>,
     onSelect: (TrackOption) -> Unit,
     onOff: (() -> Unit)?,
+    // نصّ صفّ «بلا اختيار». الافتراضي «إيقاف» ويصحّ للترجمة والصوت، أمّا الجودة فحالتها
+    // الافتراضية تكيّفٌ يعمل لا شيءٌ متوقّف — و«إيقاف» هناك تقرأ كأنّ الفيديو نفسه يُطفأ.
+    offLabel: String? = null,
     onDismiss: () -> Unit,
     audioDelayMs: Int? = null,                 // non-null on the Audio dialog (VOD) → show the A/V-sync nudge
     onAdjustAudioDelay: ((Int) -> Unit)? = null,
@@ -113,7 +116,7 @@ internal fun TrackDialog(
         if (onOff != null) {
             item {
                 if (focusOff) LaunchedEffect(Unit) { androidx.compose.runtime.withFrameNanos {}; runCatching { focus.requestFocus() } }
-                OptionRow(label = stringResource(R.string.common_off), selected = selectedIndex < 0, modifier = if (focusOff) Modifier.focusRequester(focus) else Modifier, onClick = onOff)
+                OptionRow(label = offLabel ?: stringResource(R.string.common_off), selected = selectedIndex < 0, modifier = if (focusOff) Modifier.focusRequester(focus) else Modifier, onClick = onOff)
             }
         }
         items(tracks.size) { index ->
