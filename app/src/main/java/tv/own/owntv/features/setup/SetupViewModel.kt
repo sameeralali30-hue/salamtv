@@ -108,6 +108,16 @@ class SetupViewModel(
             server = p.account.base,
             username = p.username,
             password = p.password,
+            // ═══ دليل البرامج يُسجَّل هنا، لا يتركه المشترك ═══
+            //
+            // شاشة «مصادر الدليل» تقول «لا توجد مصادر — أضف رابط XMLTV»، والمشترك
+            // في وضع المزوّد لا يملك إضافة شيء. فبقي الدليل فارغاً عند الجميع
+            // بينما اللوحة تخدمه جاهزاً.
+            //
+            // العنوان يُبنى من نطاق المشترك نفسه، فيتبع العقدة التي عُيّنت له.
+            epgUrl = p.account.base.trimEnd('/') + "/xmltv.php?username=" +
+                java.net.URLEncoder.encode(p.username, "UTF-8") + "&password=" +
+                java.net.URLEncoder.encode(p.password, "UTF-8"),
             preferHls = true,
         )
     }
