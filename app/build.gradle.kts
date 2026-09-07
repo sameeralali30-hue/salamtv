@@ -150,6 +150,33 @@ android {
         }
     }
 
+    // ═══ نكهتان من نفس الكود ═══
+    //
+    //  `site`  نسخة نطاقنا: تحدّث نفسها، وتفتح مجلّدات التنزيل التي يختارها
+    //          المستخدم — وهو ما يحتاجه التلفاز حيث لا مُنتقي ملفات.
+    //
+    //  `play`  نسخة المتجر: بلا محدّث ذاتي وبلا صلاحية «كل الملفات».
+    //
+    //  ولماذا نكهتان لا تعديلٌ واحد: سياسة Google تمنع صراحةً أن يحدّث
+    //  التطبيق نفسه خارج المتجر — إبقاء المحدّث سببُ رفضٍ مباشر. وحذفه من
+    //  النسختين معاً يقطع التحديث عن مشتركين يوزَّع إليهم خارج المتجر أصلاً.
+    //
+    //  ⚠ الاسم والتوقيع واحد في النكهتين عمداً: Play Protect يتعرّف على
+    //    التطبيق باسم الحزمة ومفتاح التوقيع، فاختلاف أيّهما يعني أنّ نسخة
+    //    الموقع تبقى «تطبيقاً مجهولاً» حتى بعد نشر نسخة المتجر — وهو الهدف
+    //    الذي نشر على المتجر من أجله.
+    flavorDimensions += "dist"
+    productFlavors {
+        create("site") {
+            dimension = "dist"
+            buildConfigField("boolean", "SALAMTV_SELF_UPDATE", "true")
+        }
+        create("play") {
+            dimension = "dist"
+            buildConfigField("boolean", "SALAMTV_SELF_UPDATE", "false")
+        }
+    }
+
     // Release signing: env vars first (that is how CI injects the GitHub secrets), then Gradle
     // properties as a local fallback. Put the local ones in the USER-WIDE file — never in the repo:
     //

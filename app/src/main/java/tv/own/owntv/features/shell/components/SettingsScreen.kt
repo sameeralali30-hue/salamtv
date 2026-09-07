@@ -499,6 +499,7 @@ fun SettingsScreen(
             chipTone = if (autoPlayNext) TileTone.PRIMARY else TileTone.SECONDARY,
             onClick = { settingsVm.setAutoPlayNext(!autoPlayNext) },
         ),
+        *(if (!tv.own.owntv.BuildConfig.SALAMTV_SELF_UPDATE) emptyArray() else arrayOf(
         RootRow(
             "quick_check_update", TileTone.SECONDARY, OwnTVIcon.DOWNLOADS,
             title = stringResource(R.string.settings_quick_check_update),
@@ -506,6 +507,7 @@ fun SettingsScreen(
             chipTone = if (updateCheckOnStart) TileTone.PRIMARY else TileTone.SECONDARY,
             onClick = { settingsVm.setUpdateCheckOnStart(!updateCheckOnStart) },
         ),
+        )),
         RootGroup("group_profile", stringResource(R.string.settings_profile_group), OwnTVIcon.PERSON, stringResource(R.string.settings_group_summary_profile)),
         RootRow(
             tabRowKey(SettingsTab.PROFILES), TileTone.SECONDARY, OwnTVIcon.PERSON,
@@ -769,6 +771,12 @@ fun SettingsScreen(
             focus = startupRowFocus,
             onClick = { saveScroll(); dialogReturn = startupRowFocus; showStartup = true },
         ),
+        // ═══ لا تُعرض إعدادات التحديث في نسخة المتجر ═══
+        //
+        // Play يحدّث التطبيق بنفسه، والنسخة المنشورة هناك بلا صلاحية التثبيت.
+        // فزرّ «تحقّق من التحديثات» فيها زرٌّ لا ينتهي إلى شيء — وواجهةٌ تَعِد
+        // بما لا تستطيع أسوأ من واجهةٍ لا تَعِد.
+        *(if (!tv.own.owntv.BuildConfig.SALAMTV_SELF_UPDATE) emptyArray() else arrayOf(
         RootRow(
             "check_updates", TileTone.PRIMARY, OwnTVIcon.REFRESH,
             title = stringResource(R.string.settings_check_updates), desc = stringResource(R.string.settings_check_updates_description),
@@ -783,6 +791,7 @@ fun SettingsScreen(
             chipTone = if (updateCheckOnStart) TileTone.PRIMARY else TileTone.SECONDARY,
             onClick = { settingsVm.setUpdateCheckOnStart(!updateCheckOnStart) },
         ),
+        )),
         RootRow(
             "about", TileTone.SECONDARY, OwnTVIcon.INFO,
             title = stringResource(R.string.settings_about), desc = stringResource(R.string.settings_about_description),
@@ -1057,10 +1066,12 @@ fun SettingsScreen(
             SettingsSearchEntry(stringResource(R.string.settings_group_network), stringResource(R.string.settings_dns), stringResource(R.string.settings_search_keywords_dns), OwnTVIcon.DNS, TileTone.SECONDARY) { open(SettingsTab.DNS) },
             SettingsSearchEntry(stringResource(R.string.settings_group_app), stringResource(R.string.settings_app_startup), stringResource(R.string.settings_search_keywords_startup), OwnTVIcon.POWER, TileTone.SECONDARY,
                 chip = startupLabel(startupMode)) { saveScroll(); dialogReturn = searchFieldFocus; showStartup = true },
+            *(if (!tv.own.owntv.BuildConfig.SALAMTV_SELF_UPDATE) emptyArray() else arrayOf(
             SettingsSearchEntry(stringResource(R.string.settings_group_app), stringResource(R.string.settings_check_updates), stringResource(R.string.settings_search_keywords_updates), OwnTVIcon.REFRESH, TileTone.PRIMARY,
                 chip = "v${tv.own.owntv.BuildConfig.VERSION_NAME}") { saveScroll(); dialogReturn = searchFieldFocus; showUpdate = true },
             SettingsSearchEntry(stringResource(R.string.settings_group_app), stringResource(R.string.settings_update_startup), stringResource(R.string.settings_search_keywords_update_auto), OwnTVIcon.REFRESH, TileTone.SECONDARY,
                 chip = if (updateCheckOnStart) stringResource(R.string.common_on) else stringResource(R.string.common_off), chipTone = if (updateCheckOnStart) TileTone.PRIMARY else TileTone.SECONDARY, showChevron = false) { settingsVm.setUpdateCheckOnStart(!updateCheckOnStart) },
+            )),
             SettingsSearchEntry(stringResource(R.string.settings_group_app), stringResource(R.string.settings_about), stringResource(R.string.settings_search_keywords_about), OwnTVIcon.INFO, TileTone.SECONDARY) { saveScroll(); dialogReturn = searchFieldFocus; showAbout = true },
         )
         val tokens = searchQuery.trim().lowercase().split(" ").filter { it.isNotBlank() }

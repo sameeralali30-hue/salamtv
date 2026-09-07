@@ -1394,7 +1394,8 @@ fun OwnTVShell(
         val settingsRepo = koinInject<tv.own.owntv.core.settings.SettingsRepository>()
         val updateCheckOnStart by settingsRepo.updateCheckOnStart.collectAsStateWithLifecycle(initialValue = false)
         LaunchedEffect(updateCheckOnStart) {
-            if (updateCheckOnStart && !showStartupToast) {
+            // نسخة المتجر لا تفحص ولا تنزّل: Play يتولّى ذلك، والصلاحية محذوفة.
+            if (updateCheckOnStart && !showStartupToast && tv.own.owntv.BuildConfig.SALAMTV_SELF_UPDATE) {
                 kotlinx.coroutines.delay(5_000)
                 showStartupToast = true
                 updateManager.check()
@@ -1406,7 +1407,8 @@ fun OwnTVShell(
         val updateState by updateManager.state.collectAsStateWithLifecycle()
         var autoStarted by remember { mutableStateOf(false) }
         LaunchedEffect(updateState) {
-            if (tv.own.owntv.core.settings.SalamTvDefaults.AUTO_INSTALL_UPDATES &&
+            if (tv.own.owntv.BuildConfig.SALAMTV_SELF_UPDATE &&
+                tv.own.owntv.core.settings.SalamTvDefaults.AUTO_INSTALL_UPDATES &&
                 !autoStarted && showStartupToast && updateState is UpdateManager.State.Available
             ) {
                 autoStarted = true

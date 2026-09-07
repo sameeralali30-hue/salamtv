@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    نسخة متجر Play — ما يُحذف هنا ولماذا.
+
+    ①  REQUEST_INSTALL_PACKAGES
+        المحدّث الذاتي. سياسة Play تمنع أن يحدّث التطبيق نفسه من خارج المتجر،
+        ووجود الصلاحية وحدها سببُ رفض. النسخة الموزّعة من نطاقنا تحتفظ بها.
+
+    ②  MANAGE_EXTERNAL_STORAGE
+        «الوصول إلى كل الملفات» — صلاحية مقيَّدة تحتاج تبريراً خاصاً، ومشغّل
+        الوسائط ليس من حالاتها المؤهّلة. أثرها الوحيد هنا اختيار مجلّد
+        التنزيل على أجهزة التلفاز؛ وعلى الهاتف يغطّي SAF الحاجة.
+
+    tools:node="remove" يحذف العنصر من البيان المدموج، فلا يظهر في النسخة
+    النهائية أصلاً — لا أن يُطلب ويُرفض.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:node="remove" />
+
+</manifest>
