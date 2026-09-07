@@ -84,6 +84,7 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
         tv.own.owntv.core.CoreBuildInfo.versionName = BuildConfig.VERSION_NAME
         tv.own.owntv.core.CoreBuildInfo.versionCode = BuildConfig.VERSION_CODE
         tv.own.owntv.core.CoreBuildInfo.edgeKey = BuildConfig.TMDB_EDGE_KEY
+        tv.own.owntv.core.CoreBuildInfo.updateUrl = BuildConfig.SALAMTV_UPDATE_URL
         tv.own.owntv.core.CoreBuildInfo.devTools = BuildConfig.DEV_TOOLS
         tv.own.owntv.core.CoreBuildInfo.debug = BuildConfig.DEBUG
         tv.own.owntv.core.CoreBuildInfo.diagnosticBuild = BuildConfig.DIAGNOSTIC_BUILD

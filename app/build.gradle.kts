@@ -100,6 +100,16 @@ android {
             ?: "https://salamtv1.mohamedalalichatbot.xyz/iptv/app_login.php"
         buildConfigField("String", "SALAMTV_LOGIN_URL", "\"$loginUrl\"")
 
+        // ── SalamTV: in-app updates ──
+        // Not GitHub's API. GitHub answers 403 to whole networks and caps unauthenticated calls at
+        // sixty per hour per address — one ISP behind one address burns that before noon — so the
+        // panel asks GitHub once for everyone and answers the app in the same shape, with a file
+        // link on our own domain.
+        val updateUrl = System.getenv("SALAMTV_UPDATE_URL")
+            ?: providers.gradleProperty("salamtv.updateUrl").orNull
+            ?: "https://salamtv1.mohamedalalichatbot.xyz/iptv/app-update"
+        buildConfigField("String", "SALAMTV_UPDATE_URL", "\"$updateUrl\"")
+
         // ── SalamTV: identity shown in About ──
         // The support channel is a business fact, not a code fact: it changes when the operator
         // changes it, and a wrong one sends a paying subscriber to a stranger's inbox. Blank hides
