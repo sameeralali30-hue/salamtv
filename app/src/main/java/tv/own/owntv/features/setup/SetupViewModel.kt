@@ -50,7 +50,7 @@ class SetupViewModel(
      * progress screen with a retry. Collapsing them would put "subscription expired" behind a
      * "Retry import" button that can never succeed.
      */
-    fun signIn(username: String, password: String, onImportStarted: () -> Unit) {
+    fun signIn(username: String, password: String, onAuthenticated: () -> Unit) {
         if (_loginUi.value.busy) return
         _loginUi.value = LoginUi(busy = true)
         viewModelScope.launch {
@@ -69,17 +69,47 @@ class SetupViewModel(
             }
 
             _loginUi.value = LoginUi()
-            onImportStarted()
-            // HLS on: the panel's quality cap rewrites the master playlist, and the ladder it
-            // leaves is what the subscriber picks from.
-            startXtream(
-                name = account.username,
-                server = account.base,
-                username = username,
-                password = password,
-                preferHls = true,
-            )
+            // ═══ لماذا يتوقّف الدخول هنا ولا يستورد ═══
+            //
+            // الاستيراد يربط القنوات ببروفايل، وإن لم يجد واحداً أنشأ بروفايلاً احتياطياً
+            // باسمٍ عام. فلو استوردنا قبل أن يُنشئ المشترك بروفايله لانتهى الأمر ببروفايلين:
+            // واحد يحمل اشتراكه ولا يعرفه، وآخر باسمه وفارغ.
+            //
+            // فالدخول يتحقّق من الحساب ويحفظه، ثمّ يُنشئ المشترك بروفايله، ثمّ يبدأ
+            // الاستيراد فيه. [finishSignIn] هي الخطوة الثانية.
+            pending = Pending(account, username, password)
+            onAuthenticated()
         }
+    }
+
+    /** الحساب الذي تحقّقنا منه للتوّ، بانتظار بروفايلٍ يُركَّب فيه. */
+    private data class Pending(
+        val account: SubscriberLoginClient.Account,
+        val username: String,
+        val password: String,
+    )
+
+    private var pending: Pending? = null
+
+    /** اسم الحساب — يقترحه التطبيق اسماً للبروفايل، فلا يكتبه المشترك مرّتين. */
+    fun accountName(): String? = pending?.account?.username
+
+    /**
+     * يستورد اشتراك الحساب في البروفايل الذي أُنشئ للتوّ.
+     *
+     * HLS مفعّل: سقف الجودة في اللوحة يعيد كتابة القائمة الرئيسية، وما يبقى منها هو
+     * ما يختار المشترك من بينه.
+     */
+    fun finishSignIn(onImportStarted: () -> Unit) {
+        val p = pending ?: return
+        onImportStarted()
+        startXtream(
+            name = p.account.username,
+            server = p.account.base,
+            username = p.username,
+            password = p.password,
+            preferHls = true,
+        )
     }
 
     fun clearLoginError() { _loginUi.value = LoginUi() }

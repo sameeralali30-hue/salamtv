@@ -113,7 +113,13 @@ fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit,
         when (step) {
             Step.WELCOME -> WelcomeScreen(onNext = { step = Step.DISCLAIMER })
             Step.DISCLAIMER -> DisclaimerScreen(
-                onAgree = { step = if (locked) Step.CREATE_PROFILE else Step.SETUP_CHOICE },
+                // ═══ الدخول أوّلاً، ثمّ البروفايل ═══
+                //
+                // كان البروفايل يسبق الدخول، فيُطلب من الزائر أن يُسمّي نفسه قبل أن يُعرف
+                // إن كان مشتركاً أصلاً — ومن أخطأ كلمة المرور بقي بروفايله في التطبيق
+                // بلا اشتراك. والآن: يُتحقّق من الحساب، ثمّ يُنشأ البروفايل باسمه مقترحاً،
+                // ثمّ تُركَّب قنوات خطّته فيه.
+                onAgree = { step = if (locked) Step.SIGN_IN else Step.SETUP_CHOICE },
                 onBack = { step = Step.WELCOME },
             )
             // First decision: start fresh or bring everything back from a backup (profiles included —
@@ -125,17 +131,31 @@ fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit,
             )
             Step.CREATE_PROFILE -> ProfileEditorDialog(
                 initial = null,
-                onConfirm = { name, avatar, kids, pin -> vm.createProfile(name.ifBlank { defaultProfileName }, avatar, kids, pin) { step = if (locked) Step.SIGN_IN else Step.ADD_CONTENT } },
-                onDismiss = { if (firstRun && !locked) step = Step.SETUP_CHOICE else onCancel() },
+                initialName = if (locked) vm.accountName().orEmpty() else String(),
+                onConfirm = { name, avatar, kids, pin ->
+                    val fallback = if (locked) vm.accountName() ?: defaultProfileName else defaultProfileName
+                    vm.createProfile(name.ifBlank { fallback }, avatar, kids, pin) {
+                        if (locked) {
+                            // البروفايل جاهز — الآن تُركَّب قنوات الخطّة فيه.
+                            vm.finishSignIn { importOrigin = Step.SIGN_IN; step = Step.IMPORTING }
+                        } else {
+                            step = Step.ADD_CONTENT
+                        }
+                    }
+                },
+                // الرجوع من البروفايل يعود إلى الدخول في وضع المزوّد: الحساب تحقّقنا منه
+                // لكن لا شيء رُكِّب بعد، فالتراجع سليم ولا يترك أثراً.
+                onDismiss = {
+                    when {
+                        firstRun && locked -> step = Step.SIGN_IN
+                        firstRun -> step = Step.SETUP_CHOICE
+                        else -> onCancel()
+                    }
+                },
             )
             // شاشة الدخول: حقلان. اللوحة تقرّر النطاق والقنوات والجودة.
             Step.SIGN_IN -> SubscriberLoginScreen(
-                onSubmit = { user, pass ->
-                    vm.signIn(user, pass) {
-                        importOrigin = Step.SIGN_IN
-                        step = Step.IMPORTING
-                    }
-                },
+                onSubmit = { user, pass -> vm.signIn(user, pass) { step = Step.CREATE_PROFILE } },
                 busy = loginUi.busy,
                 errorMessage = loginUi.message,
                 offline = loginUi.offline,

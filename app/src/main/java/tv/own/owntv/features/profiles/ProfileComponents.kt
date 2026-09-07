@@ -136,9 +136,13 @@ internal fun ProfileEditorDialog(
     onConfirm: (name: String, avatarId: Int, isKids: Boolean, pin: String?) -> Unit,
     onDismiss: () -> Unit,
     takenNames: Set<String> = emptySet(),
+    // اسمٌ مقترح لبروفايلٍ جديد. في وضع المزوّد هو اسم الحساب الذي سجّل الدخول للتوّ،
+    // فلا يكتبه المشترك مرّتين — و«إنشاء» معطّل باسمٍ فارغ، فالاقتراح هنا لا في القيمة
+    // الاحتياطية عند التأكيد.
+    initialName: String = "",
 ) {
     val colors = OwnTVTheme.colors
-    var name by remember { mutableStateOf(initial?.name ?: "") }
+    var name by remember { mutableStateOf(initial?.name ?: initialName) }
     var avatarId by remember { mutableIntStateOf(initial?.avatarId ?: -1) } // Phase 7 — new profiles default to no-avatar
     var isKids by remember { mutableStateOf(initial?.isKids ?: false) }
     var pin by remember { mutableStateOf("") }
