@@ -1,5 +1,8 @@
 package tv.own.owntv.features.setup
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.ui.platform.LocalDensity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -80,28 +84,59 @@ fun SubscriberLoginScreen(
 
     val canSubmit = username.isNotBlank() && password.isNotBlank() && !busy
 
+    // ═══ ترتيبٌ ثانٍ حين تظهر لوحة المفاتيح ═══
+    //
+    // التطبيق مقفولٌ على الوضع الأفقي، ولوحة المفاتيح هناك تأخذ نحو ثلثي
+    // الارتفاع. فما يبقى شريطٌ لا يتّسع للعنوان والحقلين والزرّ معاً، وكان
+    // العنوان يأخذه كلّه فيبقى الحقلان تحت الطيّة.
+    //
+    // فحين تظهر اللوحة: يسقط العنوان والشرح والتذييل — وكلّها قد قُرئت
+    // قبل أن يبدأ الكتابة — ويقف الحقلان جنباً إلى جنب بدل واحدٍ تحت آخر.
+    // فيصير الارتفاع المطلوب حقلاً واحداً وزرّاً، وهو ما يتّسع له الشريط.
+    val compact = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+
+    // ═══ لوحة المفاتيح كانت تبتلع نصف الشاشة ═══
+    //
+    // ⚠ في الوضع الأفقي على الهاتف تغطّي اللوحةُ حقلَ كلمة المرور وزرّ الدخول
+    //   معاً، فتهبط نقرة المشترك على مفاتيحها لا على ما قصده. العمود يمرّر
+    //   أصلاً (verticalScroll) لكنّه لا يعرف أنّ اللوحة ظهرت — و`imePadding`
+    //   على الصندوق الحاوي هي ما يُقلّص المساحة فيصير التمرير ذا معنى.
+    //
+    //   نفس النمط المستعمل في نوافذ الإعدادات (SettingsScreen.kt).
     Box(
-        modifier.fillMaxSize().roundedPanel().background(colors.background),
+        modifier.fillMaxSize().imePadding().roundedPanel().background(colors.background),
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier.verticalScroll(rememberScrollState()).padding(40.dp).width(460.dp),
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = if (compact) 24.dp else 40.dp, vertical = if (compact) 12.dp else 40.dp)
+                .then(if (compact) Modifier.fillMaxWidth() else Modifier.width(460.dp)),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                stringResource(R.string.salamtv_login_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = colors.onSurface,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                stringResource(R.string.salamtv_login_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(24.dp))
+            if (!compact) {
+                Text(
+                    stringResource(R.string.salamtv_login_title),
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = colors.onSurface,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    stringResource(R.string.salamtv_login_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(24.dp))
+            }
 
+            // ⚠ أوّل محاولة وضعت الحقلين في صفٍّ حين تظهر اللوحة وفي عمودٍ حين
+            //   تختفي. والنتيجة أنّ اللوحة لم تظهر أصلاً: الفرعان موضعان
+            //   مختلفان في شجرة التأليف، فالحقل الذي يظهر في أحدهما غير الذي
+            //   في الآخر، وحالته «قيد الكتابة» تسقط معه — فتُغلق اللوحة فور
+            //   فتحها، ويعود الترتيب، وهكذا في حلقة.
+            //
+            //   الحقلان إذن في موضع واحد لا يتغيّر، والذي يُخفى ما حولهما.
             OwnTVTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -116,6 +151,8 @@ fun SubscriberLoginScreen(
                 label = stringResource(R.string.salamtv_login_password),
                 isPassword = true,
                 keyboardType = KeyboardType.Password,
+                // ✓ يُرسل: الزرّ خلف لوحة المفاتيح في الوضع الأفقي.
+                onImeDone = { if (canSubmit) onSubmit(username.trim(), password) },
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -136,7 +173,7 @@ fun SubscriberLoginScreen(
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(if (compact) 12.dp else 24.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 onBack?.let {
                     OwnTVButton(
@@ -154,7 +191,7 @@ fun SubscriberLoginScreen(
                 )
             }
 
-            if (onRedeem != null) {
+            if (onRedeem != null && !compact) {
                 Spacer(Modifier.height(14.dp))
                 OwnTVButton(
                     stringResource(R.string.salamtv_redeem_open),
@@ -163,6 +200,7 @@ fun SubscriberLoginScreen(
                 )
             }
 
+            if (!compact) {
             Spacer(Modifier.height(18.dp))
             Text(
                 stringResource(R.string.salamtv_login_help),   // ③
@@ -170,6 +208,7 @@ fun SubscriberLoginScreen(
                 color = colors.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+            }
         }
     }
 }

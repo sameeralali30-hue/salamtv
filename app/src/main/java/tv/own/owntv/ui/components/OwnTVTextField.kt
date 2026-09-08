@@ -83,6 +83,14 @@ fun OwnTVTextField(
     surface: GlassSurface? = GlassSurface.CARDS,
     /** Corner radius of the field; a pill reads better where the field sits inline in a header. */
     corner: androidx.compose.ui.unit.Dp = 12.dp,
+    /**
+     * ما يفعله مفتاح ✓ بعد إغلاق اللوحة — أو لا شيء، وهو الأصل.
+     *
+     * يخصّ الشاشات التي يقع فيها زرّ الإرسال تحت لوحة المفاتيح: في الوضع
+     * الأفقي على الهاتف تأخذ اللوحة ثلثي الارتفاع، فيبقى الزرّ خلفها ولا
+     * يُبلغ إلا بإغلاقها. ومفتاح ✓ في متناول الإبهام أصلاً.
+     */
+    onImeDone: (() -> Unit)? = null,
 ) {
     val colors = OwnTVTheme.colors
     val interaction = remember { MutableInteractionSource() }
@@ -208,6 +216,7 @@ fun OwnTVTextField(
                         editing = false
                         keyboard?.hide()
                         runCatching { pillFocus.requestFocus() }
+                        onImeDone?.invoke()
                     }),
                     visualTransformation = if (isPassword && !showPassword) PasswordVisualTransformation() else VisualTransformation.None,
                     decorationBox = { inner ->
