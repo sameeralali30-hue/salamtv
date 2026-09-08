@@ -1225,6 +1225,21 @@ class SettingsViewModel(
      * the source row we are about to delete — holding a seat nothing can release but the reset
      * window or the operator.
      */
+    /**
+     * خروج المشترك من حسابه — زرٌّ واحد في أعلى الإعدادات.
+     *
+     * ⚠ كان الخروج متاحاً داخل «قوائم التشغيل» على بطاقة المصدر: ثلاثة
+     *   مستويات، في شاشة لا يفتحها من لا يعرف أنّ اشتراكه «مصدر». والنتيجة
+     *   أنّ من أراد الخروج مسح بيانات التطبيق من إعدادات النظام — وهو
+     *   يمحو معه البروفايل والمفضّلات وكل شيء.
+     *
+     * في وضع المزوّد للمشترك مصدرٌ واحد، فلا سؤال عن أيّها.
+     */
+    fun signOutAccount(onDone: () -> Unit = {}) {
+        val only = sources.value.singleOrNull() ?: run { onDone(); return }
+        signOut(only, onDone)
+    }
+
     fun signOut(source: SourceEntity, onDone: () -> Unit = {}) {
         if (source.id in _deletingSourceIds.value) return
         viewModelScope.launch {

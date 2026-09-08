@@ -73,12 +73,24 @@
                 tools:node="remove" />
         </provider>
 
+        <!-- ═══ عرضي دائماً — android:screenOrientation ═══
+
+             واجهة هذا التطبيق ثلاثة أعمدة جنباً إلى جنب: الفئات، ثمّ القنوات،
+             ثمّ المعاينة. صُمّمت لشاشة تلفاز، وتنضغط على هاتف رأسي حتى تتداخل
+             الأعمدة ويصير اسم القناة حرفاً في كل سطر.
+
+             والمشاهد كان يدير هاتفه يدوياً في كل مرّة ليقرأ القوائم — فجعلناها
+             تدور من نفسها. والمشاهدة عرضية أصلاً، فلا شيء يُفقد.
+
+             الحلّ الأصحّ تخطيطٌ يتكيّف: لوحٌ واحد على الشاشات الضيّقة بدل ثلاثة.
+             وهو عملٌ يمسّ كل شاشة في التطبيق، ويُبنى على مهل لا في إصلاح عاجل. -->
         <activity
             android:name=".MainActivity"
             android:banner="@drawable/tv_banner"
             android:exported="true"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustPan"
+            android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.OwnTV.Starting">
             <!-- LEANBACK_LAUNCHER shows it on TV launchers; LAUNCHER shows it on phone/tablet/box home
                  screens (so non-TV devices get an app icon, not just an install). -->

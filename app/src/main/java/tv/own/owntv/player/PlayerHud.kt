@@ -2,6 +2,7 @@ package tv.own.owntv.player
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +36,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
@@ -527,7 +529,17 @@ fun PlayerHud(
         if (!controlsVisible && !showNextCard) {
             Box(
                 Modifier.fillMaxSize().focusRequester(catchFocus).focusable()
-                    .onKeyEvent { e -> if (e.type == KeyEventType.KeyDown && e.key != Key.Back) { controlsVisible = true; true } else false },
+                    .onKeyEvent { e -> if (e.type == KeyEventType.KeyDown && e.key != Key.Back) { controlsVisible = true; true } else false }
+                    // ⚠ هذه الطبقة كانت تستمع إلى أزرار الريموت وحدها. وعلى الهاتف
+                    //   لا ريموت: يلمس المشاهد الشاشة فلا يحدث شيء، فيضطرّ إلى
+                    //   الرجوع ثمّ فتح القناة من جديد لمجرّد بلوغ زرّ الجودة.
+                    //
+                    //   pointerInput لا clickable: الأخير يجعل الطبقة قابلة للتركيز
+                    //   فيسرق مسار الريموت داخل المشغّل — نريد اللمس بلا أن نلمس
+                    //   تنقّل الشاشة.
+                    .pointerInput(Unit) {
+                        detectTapGestures(onTap = { controlsVisible = true })
+                    },
             )
         }
 

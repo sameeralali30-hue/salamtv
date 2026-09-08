@@ -310,6 +310,7 @@ fun SettingsScreen(
     val surroundMode by settingsVm.surroundMode.collectAsStateWithLifecycle()
     val autoPlayNext by settingsVm.autoPlayNext.collectAsStateWithLifecycle()
     val updateCheckOnStart by settingsVm.updateCheckOnStart.collectAsStateWithLifecycle()
+    var showSignOut by remember { mutableStateOf(false) }
     val channelNumbers by settingsVm.directTune.collectAsStateWithLifecycle()
     val quickPinned by settingsVm.quickPinnedKeys.collectAsStateWithLifecycle()
     val catchupTz by settingsVm.catchupTimezone.collectAsStateWithLifecycle()
@@ -790,6 +791,18 @@ fun SettingsScreen(
             chip = if (updateCheckOnStart) stringResource(R.string.common_on) else stringResource(R.string.common_off),
             chipTone = if (updateCheckOnStart) TileTone.PRIMARY else TileTone.SECONDARY,
             onClick = { settingsVm.setUpdateCheckOnStart(!updateCheckOnStart) },
+        ),
+        )),
+        /* خروج المشترك — في المستوى الأول لا داخل «قوائم التشغيل».
+           من لا يعرف أنّ اشتراكه «مصدر» لن يفتح تلك الشاشة أبداً، وقد كان
+           يمسح بيانات التطبيق من إعدادات النظام ليخرج — فيمحو البروفايل
+           والمفضّلات معه. */
+        *(if (!tv.own.owntv.BuildConfig.SALAMTV_LOCKED) emptyArray() else arrayOf(
+        RootRow(
+            "salamtv_sign_out", TileTone.SECONDARY, OwnTVIcon.PERSON,
+            title = stringResource(R.string.salamtv_sign_out),
+            desc = stringResource(R.string.salamtv_sign_out_confirm),
+            onClick = { showSignOut = true },
         ),
         )),
         RootRow(
@@ -1366,6 +1379,15 @@ fun SettingsScreen(
             onReset = { settingsVm.setEpgOffsetMinutes(0) },
             onDismiss = { showEpgOffset = false },
         ) }
+    }
+    if (showSignOut) {
+        tv.own.owntv.features.settings.ConfirmDialog(
+            title = stringResource(R.string.salamtv_sign_out),
+            message = stringResource(R.string.salamtv_sign_out_confirm),
+            confirmLabel = stringResource(R.string.salamtv_sign_out),
+            onConfirm = { settingsVm.signOutAccount(); showSignOut = false },
+            onDismiss = { showSignOut = false },
+        )
     }
     if (showAbout) {
         tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = { showAbout = false }) {

@@ -379,6 +379,7 @@ fun ManageSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             ConfirmDialog(
                 title = stringResource(R.string.salamtv_sign_out),
                 message = stringResource(R.string.salamtv_sign_out_confirm),
+                confirmLabel = stringResource(R.string.salamtv_sign_out),
                 onConfirm = { vm.signOut(src); confirmSignOut = null },
                 onDismiss = { confirmSignOut = null },
             )
@@ -557,7 +558,16 @@ private fun CenterStatus(content: @Composable androidx.compose.foundation.layout
 }
 
 @Composable
-internal fun ConfirmDialog(title: String, message: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+internal fun ConfirmDialog(
+    title: String,
+    message: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    /** نصّ زرّ التأكيد. الافتراضي «حذف» لأنّ أغلب استعمالاتها حذف — لكنّ
+     *  «تسجيل الخروج» ليس حذفاً، وزرٌّ يقول «حذف» تحت عنوان «تسجيل الخروج»
+     *  يجعل المشترك يظنّ أنّ حسابه سيُمحى فيتراجع. */
+    confirmLabel: String? = null,
+) {
     tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = onDismiss) {
     val colors = OwnTVTheme.colors
     val focus = remember { FocusRequester() }
@@ -572,7 +582,7 @@ internal fun ConfirmDialog(title: String, message: String, onConfirm: () -> Unit
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.focusRequester(focus))
                 Spacer(Modifier.weight(1f))
-                OwnTVButton(stringResource(R.string.common_delete), onClick = onConfirm)
+                OwnTVButton(confirmLabel ?: stringResource(R.string.common_delete), onClick = onConfirm)
             }
         }
     }
