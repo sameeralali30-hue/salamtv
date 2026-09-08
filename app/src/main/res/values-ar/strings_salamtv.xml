@@ -17,4 +17,11 @@
     <string name="salamtv_quality">الجودة</string>
     <string name="salamtv_channels">القنوات</string>
     <string name="salamtv_quality_auto">تلقائي</string>
+    <string name="salamtv_redeem_title">رمز التفعيل</string>
+    <string name="salamtv_redeem_open">لديك رمز تفعيل؟</string>
+    <string name="salamtv_redeem_hint">أدخل الرمز الذي اشتريته من الموزّع.</string>
+    <string name="salamtv_redeem_field">الرمز</string>
+    <string name="salamtv_redeem_action">تفعيل</string>
+    <string name="salamtv_redeem_working">جارٍ التفعيل…</string>
+    <string name="salamtv_redeem_offline">تعذّر الاتصال. تحقّق من الإنترنت.</string>
 </resources>

@@ -67,6 +67,8 @@ fun SubscriberLoginScreen(
     /** True when the last failure was transport, not credentials — needs the app's own wording. ① */
     offline: Boolean,
     onBack: (() -> Unit)? = null,
+    /** يفتح نافذة تفعيل الرمز — لمن اشترى رمزاً من وكيل ولم يُفعّله بعد. */
+    onRedeem: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val colors = OwnTVTheme.colors
@@ -149,6 +151,15 @@ fun SubscriberLoginScreen(
                     ),
                     onClick = { if (canSubmit) onSubmit(username.trim(), password) },
                     enabled = canSubmit,     // ②
+                )
+            }
+
+            if (onRedeem != null) {
+                Spacer(Modifier.height(14.dp))
+                OwnTVButton(
+                    stringResource(R.string.salamtv_redeem_open),
+                    onClick = onRedeem,
+                    style = OwnTVButtonStyle.SECONDARY,
                 )
             }
 

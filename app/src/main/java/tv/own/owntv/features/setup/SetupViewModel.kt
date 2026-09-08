@@ -122,6 +122,38 @@ class SetupViewModel(
         )
     }
 
+    /* ── تفعيل رمز ─────────────────────────────────────────────────────
+       الرسالة تُعرض كما جاءت من اللوحة، نجحت أم فشلت — هي وحدها تعرف
+       الفرق بين رمزٍ خاطئ ورمزٍ استُعمل. */
+    data class RedeemUi(
+        val busy: Boolean = false,
+        val message: String = "",
+        val ok: Boolean = false,
+        val offline: Boolean = false,
+    )
+
+    private val _redeemUi = MutableStateFlow(RedeemUi())
+    val redeemUi: StateFlow<RedeemUi> = _redeemUi.asStateFlow()
+
+    fun redeem(username: String, password: String, code: String) {
+        if (_redeemUi.value.busy) return
+        _redeemUi.value = RedeemUi(busy = true)
+        viewModelScope.launch {
+            val r = subscriberLogin.redeem(username, password, code)
+            _redeemUi.value = r.fold(
+                onSuccess = { RedeemUi(message = it, ok = true) },
+                onFailure = { e ->
+                    // رسالة اللوحة إن وُجدت. وإن غابت فالعطل نقلٌ لا رفض،
+                    // ونصّه في الموارد لا هنا: `offline` تقوله الواجهة.
+                    val m = (e as? SubscriberLoginClient.LoginException)?.message.orEmpty()
+                    RedeemUi(message = m, offline = m.isBlank())
+                },
+            )
+        }
+    }
+
+    fun clearRedeem() { _redeemUi.value = RedeemUi() }
+
     fun clearLoginError() { _loginUi.value = LoginUi() }
 
     // ---- Remote (companion) add-source: a LAN web form fills the Add Source screen from another device. ----

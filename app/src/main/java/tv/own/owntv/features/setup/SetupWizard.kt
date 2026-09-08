@@ -98,6 +98,8 @@ fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit,
     val progress by vm.progress.collectAsStateWithLifecycle()
     val epgSync by vm.epgSync.collectAsStateWithLifecycle()
     val loginUi by vm.loginUi.collectAsStateWithLifecycle()
+    val redeemUi by vm.redeemUi.collectAsStateWithLifecycle()
+    var showRedeem by rememberSaveable { mutableStateOf(false) }
     // بناء المزوّد: المشترك يسجّل الدخول ولا يختار خادماً ولا يضيف قائمة.
     val locked = tv.own.owntv.BuildConfig.SALAMTV_LOCKED
     var existing by remember { mutableStateOf<List<SourceEntity>>(emptyList()) }
@@ -156,6 +158,8 @@ fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit,
             // شاشة الدخول: حقلان. اللوحة تقرّر النطاق والقنوات والجودة.
             Step.SIGN_IN -> SubscriberLoginScreen(
                 onSubmit = { user, pass -> vm.signIn(user, pass) { step = Step.CREATE_PROFILE } },
+                // من اشترى رمزاً من وكيل يُفعّله هنا قبل أن يدخل.
+                onRedeem = { showRedeem = true },
                 busy = loginUi.busy,
                 errorMessage = loginUi.message,
                 offline = loginUi.offline,
@@ -237,6 +241,21 @@ fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit,
                 onPick = { file -> vm.importBackup(file, onDone) }, // restore activates a profile itself
                 onPassword = { file, pass -> vm.restoreWithPassword(file, pass, onDone) },
                 onBack = { vm.reset(); step = backupOrigin },
+            )
+        }
+
+        // نافذة تفعيل الرمز تعلو الخطوة أياً كانت: من يشتري رمزاً قد يفعّله
+        // قبل أن يكون له حساب داخل التطبيق.
+        if (showRedeem) {
+            RedeemDialog(
+                knownUsername = null,
+                knownPassword = null,
+                busy = redeemUi.busy,
+                message = redeemUi.message,
+                succeeded = redeemUi.ok,
+                offline = redeemUi.offline,
+                onSubmit = { u, p, c -> vm.redeem(u, p, c) },
+                onDismiss = { showRedeem = false; vm.clearRedeem() },
             )
         }
         // Semi-auto EPG: after the first playlist imports, ask → sync (live count) → done (overlays "All set!").

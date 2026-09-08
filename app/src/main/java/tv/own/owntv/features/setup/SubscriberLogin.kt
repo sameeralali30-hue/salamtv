@@ -133,6 +133,51 @@ class SubscriberLoginClient(
      * playlist goes either way; the worst case is a stale binding the subscriber can clear with
      * "Free my devices", or the operator from the panel.
      */
+    /**
+     * يفعّل رمزاً اشتراه المشترك من وكيل.
+     *
+     * الرمز يُضيف أياماً إلى حسابٍ قائم، فلا معنى له بلا بيانات دخول —
+     * ولذلك ترسل الشاشة الثلاثة معاً.
+     *
+     * تعيد رسالة اللوحة كما هي، نجحت أم فشلت: هي التي تعرف الفرق بين
+     * «رمز غير صحيح» و«استعملتَه من قبل»، والتطبيق لا يملك أن يخمّنه.
+     */
+    suspend fun redeem(username: String, password: String, code: String): Result<String> =
+        withContext(Dispatchers.IO) {
+            val payload = JSONObject()
+                .put("username", username)
+                .put("password", password)
+                .put("code", code)
+                .toString()
+                .toRequestBody(JSON)
+
+            val url = BuildConfig.SALAMTV_LOGIN_URL.substringBeforeLast('/') + "/app_redeem.php"
+            val request = Request.Builder()
+                .url(url)
+                .header("Accept", "application/json")
+                .post(payload)
+                .build()
+
+            val text = try {
+                client.newCall(request).execute().use { it.body.string() }
+            } catch (e: IOException) {
+                Log.w(TAG, "redeem transport failure: ${e.javaClass.simpleName}")
+                return@withContext Result.failure(LoginException(CODE_OFFLINE, ""))
+            }
+
+            val json = runCatching { JSONObject(text) }.getOrElse {
+                return@withContext Result.failure(LoginException(CODE_OFFLINE, ""))
+            }
+            val msg = json.optString("message")
+            if (json.optBoolean("ok")) {
+                Log.i(TAG, "redeem ok")
+                Result.success(msg)
+            } else {
+                Log.w(TAG, "redeem refused")
+                Result.failure(LoginException("refused", msg))
+            }
+        }
+
     suspend fun logout(username: String, password: String): Boolean = withContext(Dispatchers.IO) {
         val installId = runCatching { clientId.get() }.getOrDefault("")
         val payload = JSONObject()

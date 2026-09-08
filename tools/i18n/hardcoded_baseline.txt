@@ -51,16 +51,23 @@
 1	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	+
 1	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	FFFFFF
 1	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	–
-3	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	\0
-2	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	Accept
-2	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	application/json
+1	app/src/main/java/tv/own/owntv/features/setup/RedeemDialog.kt	\0
+1	app/src/main/java/tv/own/owntv/features/setup/SetupViewModel.kt	\0
+5	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	\0
+1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	/app_redeem.php
+3	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	Accept
+3	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	application/json
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	device_id
-1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	message
+2	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	message
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	offline
-2	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	ok
-3	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	password
+3	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	ok
+4	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	password
+1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	redeem ok
+1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	redeem refused
+1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	redeem transport failure: ${e.javaClass.simpleName}
+1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	refused
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	unknown
-2	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	username
+3	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	username
 3	app/src/main/java/tv/own/owntv/features/setup/SubscriberLoginScreen.kt	\0
 1	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	\0
 1	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	\0

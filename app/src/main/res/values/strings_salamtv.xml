@@ -25,4 +25,11 @@
     <string name="salamtv_quality">Quality</string>
     <string name="salamtv_channels">Channels</string>
     <string name="salamtv_quality_auto">Automatic</string>
+    <string name="salamtv_redeem_title">Activation code</string>
+    <string name="salamtv_redeem_open">Have an activation code?</string>
+    <string name="salamtv_redeem_hint">Enter the code you bought from your reseller.</string>
+    <string name="salamtv_redeem_field">Code</string>
+    <string name="salamtv_redeem_action">Activate</string>
+    <string name="salamtv_redeem_working">Activating…</string>
+    <string name="salamtv_redeem_offline">Could not connect. Check your internet.</string>
 </resources>
