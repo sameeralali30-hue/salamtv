@@ -1236,8 +1236,27 @@ class SettingsViewModel(
      * في وضع المزوّد للمشترك مصدرٌ واحد، فلا سؤال عن أيّها.
      */
     fun signOutAccount(onDone: () -> Unit = {}) {
-        val only = sources.value.singleOrNull() ?: run { onDone(); return }
-        signOut(only, onDone)
+        viewModelScope.launch {
+            /* ⚠ كانت تقرأ `sources.value`، وهي StateFlow بـWhileSubscribed:
+                 حين لا تكون شاشة المصادر مفتوحة لا مشترك بها، فتبقى قيمتها
+                 القائمة الفارغة الابتدائية. فكان الزرّ يعمل والنافذة تظهر
+                 ولا يحدث شيء — عطلٌ صامت لا يترك أثراً يُشتبه به.
+
+                 القراءة من قاعدة البيانات مباشرة لا تعتمد على وجود مشترك. */
+            val pid = settings.activeProfileId.first()
+            if (pid < 0L) { onDone(); return@launch }
+            val list = sourceDao.observeForProfile(pid).first()
+            when (list.size) {
+                0 -> onDone()
+                // في وضع المزوّد مصدرٌ واحد. وإن تعدّدت — وهو ما لا يقع في
+                // هذا الوضع — نخرج منها جميعاً: «تسجيل الخروج» يعني الخروج،
+                // لا الخروج من واحدٍ وترك الباقي.
+                else -> {
+                    list.forEach { signOut(it) }
+                    onDone()
+                }
+            }
+        }
     }
 
     fun signOut(source: SourceEntity, onDone: () -> Unit = {}) {

@@ -87,13 +87,38 @@ private enum class Step { WELCOME, DISCLAIMER, SETUP_CHOICE, CREATE_PROFILE, SIG
  * app; [onCancel] backs out (to the gate).
  */
 @Composable
-fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit, modifier: Modifier = Modifier) {
+fun Onboarding(
+    firstRun: Boolean,
+    onDone: (Long?) -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+    /**
+     * عودةُ مشترِكٍ سجّل خروجه: مُعرّف بروفايله القائم، أو `null` في كل ما عداه.
+     *
+     * تبدأ من شاشة الدخول مباشرةً، وبعد التحقّق تُركَّب القنوات في هذا البروفايل
+     * بعينه — لا ترحيبٌ يُعاد ولا بروفايلٌ ثانٍ يُنشأ لنفس الشخص.
+     *
+     * ⚠ المُعرّف ضروري لا زينة: [SourceImporter] يستورد إلى البروفايل الذي
+     *   أنشأه هو، وحين لا يجده يصنع واحداً احتياطياً — فلو مرّرنا راية بلا
+     *   مُعرّف لوجد العائدُ نفسه في بروفايل جديد وقد بقي القديم فارغاً بجانبه.
+     */
+    signInProfileId: Long? = null,
+) {
     val vm: SetupViewModel = koinViewModel()
     val defaultProfileName = stringResource(R.string.setup_default_profile)
     val defaultIptvName = stringResource(R.string.setup_default_iptv)
     val defaultPlaylistName = stringResource(R.string.setup_name_default_playlist)
     val defaultPortalName = stringResource(R.string.setup_default_portal)
-    var step by rememberSaveable(firstRun) { mutableStateOf(if (firstRun) Step.WELCOME else Step.CREATE_PROFILE) }
+    val signInOnly = signInProfileId != null
+    var step by rememberSaveable(firstRun, signInOnly) {
+        mutableStateOf(
+            when {
+                signInOnly -> Step.SIGN_IN
+                firstRun -> Step.WELCOME
+                else -> Step.CREATE_PROFILE
+            },
+        )
+    }
     val importState by vm.state.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
     val epgSync by vm.epgSync.collectAsStateWithLifecycle()
@@ -157,7 +182,17 @@ fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit,
             )
             // شاشة الدخول: حقلان. اللوحة تقرّر النطاق والقنوات والجودة.
             Step.SIGN_IN -> SubscriberLoginScreen(
-                onSubmit = { user, pass -> vm.signIn(user, pass) { step = Step.CREATE_PROFILE } },
+                // العائد بعد خروجٍ له بروفايله: نتخطّى إنشاءه ونركّب فيه مباشرةً.
+                onSubmit = { user, pass ->
+                    vm.signIn(user, pass) {
+                        if (signInProfileId != null) {
+                            vm.useProfile(signInProfileId)
+                            vm.finishSignIn { importOrigin = Step.SIGN_IN; step = Step.IMPORTING }
+                        } else {
+                            step = Step.CREATE_PROFILE
+                        }
+                    }
+                },
                 // من اشترى رمزاً من وكيل يُفعّله هنا قبل أن يدخل.
                 onRedeem = { showRedeem = true },
                 busy = loginUi.busy,

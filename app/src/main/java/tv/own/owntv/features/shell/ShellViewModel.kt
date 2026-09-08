@@ -288,6 +288,29 @@ class ShellViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    /**
+     * وضع المزوّد: هل خرج المشترك من اشتراكه؟
+     *
+     * ⚠ البوّابة في MainActivity تسأل عن البروفايل لا عن الاشتراك، والبروفايل
+     *   يبقى بعد الخروج. فكان «تسجيل الخروج» يُزيل المصدر ويترك المشترك على
+     *   قشرةٍ فارغة بلا قنوات وبلا طريقٍ للعودة إلا مسح بيانات التطبيق.
+     *
+     * `null` تعني «لم تُقرأ المصادر بعد» — فلا تومض شاشة الدخول على من هو
+     * داخلٌ أصلاً في اللحظة التي تسبق أوّل انبعاث من القاعدة.
+     *
+     * في البناء غير المقفل لا معنى للسؤال: هناك يُضاف المصدر ويُحذف بحرّية.
+     */
+    val signedOut: StateFlow<Boolean?> =
+        if (!tv.own.owntv.BuildConfig.SALAMTV_LOCKED) {
+            MutableStateFlow<Boolean?>(false)
+        } else {
+            settings.activeProfileId
+                .flatMapLatest { pid ->
+                    if (pid < 0) flowOf(false) else sourceRepository.observeSources(pid).map { it.isEmpty() }
+                }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        }
+
     /** The active profile's playlists, for the top-bar quick switcher (empty when the profile has none). */
     val playlists: StateFlow<List<tv.own.owntv.core.database.entity.SourceEntity>> = settings.activeProfileId
         .flatMapLatest { pid -> if (pid < 0) flowOf(emptyList()) else sourceRepository.observeSources(pid) }

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import tv.own.owntv.core.database.entity.SourceEntity
+import tv.own.owntv.core.settings.PlaylistAutoRefresh
 import tv.own.owntv.core.setup.SourceImporter
 import tv.own.owntv.core.settings.PlaylistRefresh
 import tv.own.owntv.core.sync.SyncScopeChoice
@@ -94,6 +95,9 @@ class SetupViewModel(
     /** اسم الحساب — يقترحه التطبيق اسماً للبروفايل، فلا يكتبه المشترك مرّتين. */
     fun accountName(): String? = pending?.account?.username
 
+    /** يربط الاستيراد ببروفايل قائم بدل أن يُنشئ واحداً — طريق العائد بعد الخروج. */
+    fun useProfile(id: Long) = importer.useProfile(id)
+
     /**
      * يستورد اشتراك الحساب في البروفايل الذي أُنشئ للتوّ.
      *
@@ -108,6 +112,17 @@ class SetupViewModel(
             server = p.account.base,
             username = p.username,
             password = p.password,
+            // ═══ يُزامن عند كل فتح ═══
+            //
+            // ⚠ كان OFF، فبقي الكتالوج على ما استُورد يوم تسجيل الدخول. والموزّع
+            //   يرفع خطّة مشترك في اللوحة فلا يرى المشترك شيئاً: لا قنوات
+            //   جديدة، ولا سقف جودة أعلى — حتى يمسح التطبيق أو يخرج ويدخل.
+            //   وهذا يجعل كل ترقية مكالمةَ دعم.
+            //
+            //   STARTUP لا فترة زمنية: الترقية تُشترى وتُنتظر دقائق لا ساعات،
+            //   وفتح التطبيق هو اللحظة التي يتوقّع فيها المشترك أن يرى ما دفع
+            //   ثمنه. والمزامنة رخيصة — قائمة قنوات لا بثّ.
+            autoRefresh = PlaylistRefresh(PlaylistAutoRefresh.STARTUP),
             // ═══ دليل البرامج يُسجَّل هنا، لا يتركه المشترك ═══
             //
             // شاشة «مصادر الدليل» تقول «لا توجد مصادر — أضف رابط XMLTV»، والمشترك

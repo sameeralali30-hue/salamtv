@@ -273,6 +273,8 @@ class MainActivity : ComponentActivity() {
             val gateRequired = shouldShowProfileGate || switchProfileRequested
             val authenticatedForActiveProfile = loadedProfileId != null &&
                 authenticatedProfileId == loadedProfileId
+            // وضع المزوّد: خرج من اشتراكه فبقي بروفايله. `null` = لم تُقرأ المصادر بعد.
+            val signedOut by viewModel.signedOut.collectAsStateWithLifecycle()
             val shellReady = tv.own.owntv.features.profiles.shellMayCompose(
                 profileState = profileState,
                 activeProfileId = loadedProfileId,
@@ -415,6 +417,18 @@ class MainActivity : ComponentActivity() {
                             gateRequired && !authenticatedForActiveProfile -> ProfileGate(
                                 onEnter = { profileId -> gateSession.authenticateProfile(profileId) },
                                 onAddProfile = { gateSession.startAddingProfile() },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                            // خرج من اشتراكه → شاشة الدخول، لا قشرةٌ فارغة.
+                            //
+                            // ترتيبها بعد بوّابة البروفايل مقصود: البوّابة أسبق، ولا تقع
+                            // هذه أثناء الإعداد الأوّل لأنّ `activeProfileId` يبقى سالباً
+                            // حتى ينتهي الاستيراد — فالفرع الأوّل يحمي المعالج القائم.
+                            signedOut == true && loadedProfileId != null && loadedProfileId >= 0L -> Onboarding(
+                                firstRun = false,
+                                signInProfileId = loadedProfileId,
+                                onDone = { profileId -> gateSession.authenticateProfile(profileId) },
+                                onCancel = {},
                                 modifier = Modifier.fillMaxSize(),
                             )
                             shellReady -> OwnTVShell(
