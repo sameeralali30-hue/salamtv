@@ -137,6 +137,48 @@ class SetupViewModel(
         )
     }
 
+    /* ── إنشاء حساب ────────────────────────────────────────────────────
+       الرمز حاملٌ لقيمة لا يعرف صاحبه، والحساب هو ما تُضاف إليه الأيام.
+       فمن اشترى رمزاً ولا حساب له كان عليه أن يفتح المتصفّح ويسجّل هناك. */
+    data class RegisterUi(
+        val busy: Boolean = false,
+        val message: String = "",
+        val ok: Boolean = false,
+        val offline: Boolean = false,
+    )
+
+    private val _registerUi = MutableStateFlow(RegisterUi())
+    val registerUi: StateFlow<RegisterUi> = _registerUi.asStateFlow()
+
+    fun clearRegister() { _registerUi.value = RegisterUi() }
+
+    /**
+     * يُنشئ الحساب — ومعه الرمز إن كان بيده — ثمّ يُسجّل الدخول به مباشرةً.
+     *
+     * الدخول التلقائي مقصود: من أنشأ حسابه للتوّ يعرف بياناته، وإعادة
+     * كتابتها في شاشة الدخول خطوةٌ لا تُضيف شيئاً إلا فرصةً لخطأٍ مطبعي.
+     */
+    fun register(username: String, password: String, code: String, onSignedIn: () -> Unit) {
+        if (_registerUi.value.busy) return
+        _registerUi.value = RegisterUi(busy = true)
+        viewModelScope.launch {
+            subscriberLogin.register(username, password, code)
+                .onSuccess { msg ->
+                    _registerUi.value = RegisterUi(message = msg, ok = true)
+                    // الحساب قائم — ندخل به. وإن كان الرمز قد فشل فالحساب
+                    // معلَّق، وشاشة الدخول تقول ذلك بنصّ اللوحة.
+                    signIn(username, password) { onSignedIn() }
+                }
+                .onFailure { e ->
+                    val ex = e as? SubscriberLoginClient.LoginException
+                    _registerUi.value = RegisterUi(
+                        message = ex?.message.orEmpty(),
+                        offline = ex?.code == SubscriberLoginClient.CODE_OFFLINE,
+                    )
+                }
+        }
+    }
+
     /* ── تفعيل رمز ─────────────────────────────────────────────────────
        الرسالة تُعرض كما جاءت من اللوحة، نجحت أم فشلت — هي وحدها تعرف
        الفرق بين رمزٍ خاطئ ورمزٍ استُعمل. */

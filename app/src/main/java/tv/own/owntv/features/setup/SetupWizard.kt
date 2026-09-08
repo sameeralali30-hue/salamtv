@@ -124,7 +124,9 @@ fun Onboarding(
     val epgSync by vm.epgSync.collectAsStateWithLifecycle()
     val loginUi by vm.loginUi.collectAsStateWithLifecycle()
     val redeemUi by vm.redeemUi.collectAsStateWithLifecycle()
+    val registerUi by vm.registerUi.collectAsStateWithLifecycle()
     var showRedeem by rememberSaveable { mutableStateOf(false) }
+    var showRegister by rememberSaveable { mutableStateOf(false) }
     // بناء المزوّد: المشترك يسجّل الدخول ولا يختار خادماً ولا يضيف قائمة.
     val locked = tv.own.owntv.BuildConfig.SALAMTV_LOCKED
     var existing by remember { mutableStateOf<List<SourceEntity>>(emptyList()) }
@@ -195,6 +197,8 @@ fun Onboarding(
                 },
                 // من اشترى رمزاً من وكيل يُفعّله هنا قبل أن يدخل.
                 onRedeem = { showRedeem = true },
+                // ومن لا حساب له يُنشئه هنا — الرمز وحده لا يكفي.
+                onRegister = { showRegister = true },
                 busy = loginUi.busy,
                 errorMessage = loginUi.message,
                 offline = loginUi.offline,
@@ -276,6 +280,33 @@ fun Onboarding(
                 onPick = { file -> vm.importBackup(file, onDone) }, // restore activates a profile itself
                 onPassword = { file, pass -> vm.restoreWithPassword(file, pass, onDone) },
                 onBack = { vm.reset(); step = backupOrigin },
+            )
+        }
+
+        // إنشاء الحساب يعلو الخطوة كذلك — الرمز حاملٌ لقيمة والأيام تُضاف
+        // إلى حساب، فمن معه رمز ولا حساب له يبدأ من هنا.
+        if (showRegister) {
+            RegisterDialog(
+                busy = registerUi.busy,
+                message = registerUi.message,
+                succeeded = registerUi.ok,
+                offline = registerUi.offline,
+                onSubmit = { u, p, code ->
+                    vm.register(u, p, code) {
+                        // دخل بالحساب الذي أنشأه للتوّ — يُكمل كأيّ داخل.
+                        showRegister = false
+                        vm.clearRegister()
+                        step = if (signInProfileId != null) {
+                            vm.useProfile(signInProfileId)
+                            vm.finishSignIn { importOrigin = Step.SIGN_IN }
+                            Step.IMPORTING
+                        } else {
+                            Step.CREATE_PROFILE
+                        }
+                    }
+                },
+                onHaveAccount = { showRegister = false; vm.clearRegister() },
+                onDismiss = { showRegister = false; vm.clearRegister() },
             )
         }
 

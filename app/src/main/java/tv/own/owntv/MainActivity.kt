@@ -1,5 +1,6 @@
 package tv.own.owntv
 
+import androidx.compose.runtime.DisposableEffect
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -299,6 +300,29 @@ class MainActivity : ComponentActivity() {
             // "Refresh on startup" — re-sync sources once the active profile is known.
             LaunchedEffect(activeProfileId) {
                 if ((activeProfileId ?: -1L) >= 0L) viewModel.checkAutoRefresh(includeStartup = true)
+            }
+
+            // ═══ الترقية تصل بلا خروجٍ ولا مسح ═══
+            //
+            // ⚠ كان الموزّع يرفع الخطّة في اللوحة فلا يرى المشترك شيئاً حتى
+            //   يخرج ويدخل — فكانت كلّ ترقية مكالمةَ دعم.
+            //
+            //   عند الإقلاع، ثمّ عند كلّ عودة إلى التطبيق. والفحص نفسه
+            //   يُهمل ما دون خمس دقائق، فالعودة المتكرّرة لا تُثقل شيئاً.
+            LaunchedEffect(activeProfileId) {
+                if ((activeProfileId ?: -1L) >= 0L) viewModel.checkSubscription()
+            }
+            val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+            DisposableEffect(lifecycleOwner, activeProfileId) {
+                val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                    if (event == androidx.lifecycle.Lifecycle.Event.ON_START &&
+                        (activeProfileId ?: -1L) >= 0L
+                    ) {
+                        viewModel.checkSubscription()
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
             }
 
             OwnTVTheme(

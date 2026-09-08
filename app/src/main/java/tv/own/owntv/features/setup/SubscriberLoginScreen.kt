@@ -73,6 +73,8 @@ fun SubscriberLoginScreen(
     onBack: (() -> Unit)? = null,
     /** يفتح نافذة تفعيل الرمز — لمن اشترى رمزاً من وكيل ولم يُفعّله بعد. */
     onRedeem: (() -> Unit)? = null,
+    /** يفتح نافذة إنشاء حساب — لمن معه رمز ولا حساب له بعد. */
+    onRegister: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val colors = OwnTVTheme.colors
@@ -191,13 +193,27 @@ fun SubscriberLoginScreen(
                 )
             }
 
-            if (onRedeem != null && !compact) {
+            // من لا حساب له يجده هنا: الرمز وحده لا يكفي، والأيام تُضاف
+            // إلى حساب. وضعُه بجانب «لديك رمز تفعيل؟» مقصود — من يبحث عن
+            // أحدهما يرى الآخر.
+            if (!compact && (onRedeem != null || onRegister != null)) {
                 Spacer(Modifier.height(14.dp))
-                OwnTVButton(
-                    stringResource(R.string.salamtv_redeem_open),
-                    onClick = onRedeem,
-                    style = OwnTVButtonStyle.SECONDARY,
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    onRegister?.let {
+                        OwnTVButton(
+                            stringResource(R.string.salamtv_register_open),
+                            onClick = it,
+                            style = OwnTVButtonStyle.SECONDARY,
+                        )
+                    }
+                    onRedeem?.let {
+                        OwnTVButton(
+                            stringResource(R.string.salamtv_redeem_open),
+                            onClick = it,
+                            style = OwnTVButtonStyle.SECONDARY,
+                        )
+                    }
+                }
             }
 
             if (!compact) {

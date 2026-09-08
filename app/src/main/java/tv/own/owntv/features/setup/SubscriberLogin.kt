@@ -178,6 +178,122 @@ class SubscriberLoginClient(
             }
         }
 
+    /**
+     * إنشاء حساب من داخل التطبيق، ومعه الرمز إن كان بيده.
+     *
+     * ⚠ الحساب والرمز شيئان: الرمز حاملٌ لقيمة لا يعرف صاحبه، والأيام تُضاف
+     *   إلى حساب. فمن اشترى رمزاً ولا حساب له كان عليه أن يفتح المتصفّح
+     *   ويسجّل هناك ثمّ يعود — ومن لم يفهم ذلك أدخل اسماً لم يُنشئه بعد،
+     *   فقيل له «اسم المستخدم أو كلمة المرور غير صحيحة»، وهي رسالة صادقة
+     *   لا تدلّه على شيء.
+     *
+     * اللوحة تُنشئ وتُفعّل في طلب واحد، وتُبقي الحساب إن فشل الرمز وحده —
+     * فلا يفقد الاسم الذي اختاره بسبب حرفٍ أخطأ فيه.
+     *
+     * @return رسالة اللوحة عند النجاح؛ ونصّها هو ما يُعرض كما هو عند الرفض.
+     */
+    suspend fun register(
+        username: String,
+        password: String,
+        code: String,
+    ): Result<String> = withContext(Dispatchers.IO) {
+        val payload = JSONObject()
+            .put("username", username)
+            .put("password", password)
+            .put("code", code)
+            .toString()
+            .toRequestBody(JSON)
+
+        val url = BuildConfig.SALAMTV_LOGIN_URL.substringBeforeLast('/') + "/app_register.php"
+        val request = Request.Builder()
+            .url(url)
+            .header("Accept", "application/json")
+            .post(payload)
+            .build()
+
+        val text = try {
+            client.newCall(request).execute().use { it.body.string() }
+        } catch (e: IOException) {
+            Log.w(TAG, "register transport failure: ${e.javaClass.simpleName}")
+            return@withContext Result.failure(LoginException(CODE_OFFLINE, ""))
+        }
+
+        val json = runCatching { JSONObject(text) }.getOrElse {
+            return@withContext Result.failure(LoginException(CODE_OFFLINE, ""))
+        }
+        val msg = json.optString("message")
+        if (json.optBoolean("ok")) {
+            Log.i(TAG, "register ok (redeemed=${json.optBoolean("redeemed")})")
+            Result.success(msg)
+        } else {
+            Log.w(TAG, "register refused")
+            Result.failure(LoginException("refused", msg))
+        }
+    }
+
+    /**
+     * حالة الاشتراك: ما يُعرض للمشترك، وما يُقاس به تغيّر خطّته.
+     *
+     * [Status.rev] بصمة تجمع الخطّة ونهاية الاشتراك وحالة التفعيل وسقف
+     * الجودة. تغيُّرها وحده يعني أنّ الكتالوج لم يعد صحيحاً — فيُعاد بناؤه.
+     * وثباتها يعني ألّا شيء يُفعل، وهو الغالب: ردٌّ في مئتَي بايت بدل سحب
+     * مئتَي قناة كلّ بضع دقائق لاكتشاف أنّ شيئاً لم يتغيّر.
+     *
+     * يعيد null عند أيّ تعذّر — لأنّ المتصل يفرّق بين «تغيّر شيء» و«لا
+     * أدري»، ولا يجوز أن يُفهم انقطاعُ الشبكة تغييراً في الخطّة.
+     */
+    data class Status(
+        val rev: String,
+        val username: String,
+        val state: String,          // active | expired | pending | disabled
+        val active: Boolean,
+        val daysLeft: Int,          // -1 = اشتراك مفتوح
+        val planName: String,
+        val maxQuality: Int,        // 0 = بلا حدّ
+        val devices: Int,
+        /** بالثواني منذ الحقبة، أو null. اللوحة ترسل رقماً لا نصّاً: نصّ بلا
+         *  منطقة زمنية يُقرأ على الجهاز بمنطقته فيتقدّم الانتهاء أو يتأخّر. */
+        val subStart: Long?,
+        val subEnd: Long?,
+    )
+
+    suspend fun account(username: String, password: String): Status? = withContext(Dispatchers.IO) {
+        val payload = JSONObject()
+            .put("username", username)
+            .put("password", password)
+            .toString()
+            .toRequestBody(JSON)
+
+        val url = BuildConfig.SALAMTV_LOGIN_URL.substringBeforeLast('/') + "/app_account.php"
+        val request = Request.Builder()
+            .url(url)
+            .header("Accept", "application/json")
+            .post(payload)
+            .build()
+
+        return@withContext runCatching {
+            client.newCall(request).execute().use { resp ->
+                val j = JSONObject(resp.body.string())
+                if (!j.optBoolean("ok")) return@use null
+                Status(
+                    rev = j.optString("rev"),
+                    username = j.optString("username"),
+                    state = j.optString("state"),
+                    active = j.optBoolean("active"),
+                    daysLeft = j.optInt("days_left"),
+                    planName = j.optString("plan_name"),
+                    maxQuality = j.optInt("max_quality"),
+                    devices = j.optInt("devices", 1),
+                    subStart = j.optLong("sub_start").takeIf { it > 0 },
+                    subEnd = j.optLong("sub_end").takeIf { it > 0 },
+                )
+            }
+        }.getOrElse {
+            Log.w(TAG, "account check failed: ${it.javaClass.simpleName}")
+            null
+        }
+    }
+
     suspend fun logout(username: String, password: String): Boolean = withContext(Dispatchers.IO) {
         val installId = runCatching { clientId.get() }.getOrDefault("")
         val payload = JSONObject()

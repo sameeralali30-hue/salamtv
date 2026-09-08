@@ -52,6 +52,15 @@ fun RedeemDialog(
     succeeded: Boolean,
     /** عطل نقل لا رفض — نصّه من الموارد لأنّ اللوحة لم تُجب. */
     offline: Boolean = false,
+    /**
+     * هل تُعرض حقول الحساب؟
+     *
+     * ⚠ أوّل ربطٍ من الإعدادات مرّر شرطتين كاسمٍ وكلمة مرور ليُخفيهما، وهي
+     *   قيمة وهمية تظهر للمشترك إن تغيّر الشرط يوماً. الاستدعاء من الإعدادات
+     *   لا يحتاجهما أصلاً: الـViewModel يقرأ البيانات من المصدر ولا تمرّ
+     *   عبر الشاشة.
+     */
+    askForAccount: Boolean = knownUsername.isNullOrBlank() || knownPassword.isNullOrBlank(),
     onSubmit: (username: String, password: String, code: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -61,8 +70,8 @@ fun RedeemDialog(
     var code by remember { mutableStateOf("") }
 
     // ② ما نعرفه لا نسأل عنه
-    val needsAccount = knownUsername.isNullOrBlank() || knownPassword.isNullOrBlank()
-    val canSubmit = !busy && code.isNotBlank() && user.isNotBlank() && pass.isNotBlank()
+    val needsAccount = askForAccount
+    val canSubmit = !busy && code.isNotBlank() && (!needsAccount || (user.isNotBlank() && pass.isNotBlank()))
 
     // نفس غلاف نوافذ البروفايل: تعتيمٌ خلف اللوح وحدود تركيز للريموت.
     // ⚠ أوّل نسخة استعملت OwnTVPopup مباشرةً بلا لوح، فظهرت الحقول فوق

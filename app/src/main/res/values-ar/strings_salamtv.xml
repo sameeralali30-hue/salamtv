@@ -24,4 +24,26 @@
     <string name="salamtv_redeem_action">تفعيل</string>
     <string name="salamtv_redeem_working">جارٍ التفعيل…</string>
     <string name="salamtv_redeem_offline">تعذّر الاتصال. تحقّق من الإنترنت.</string>
+    <string name="salamtv_account">حسابي</string>
+    <string name="salamtv_account_desc">خطّتك ومتى بدأت ومتى تنتهي</string>
+    <string name="salamtv_account_username">اسم المستخدم</string>
+    <string name="salamtv_account_plan">الخطّة</string>
+    <string name="salamtv_account_started">بدأ في</string>
+    <string name="salamtv_account_ends">ينتهي في</string>
+    <string name="salamtv_account_days_left">المتبقّي</string>
+    <string name="salamtv_account_open">اشتراك مفتوح</string>
+    <string name="salamtv_account_state_active">فعّال</string>
+    <string name="salamtv_account_state_expired">انتهى — أدخل رمز تفعيل للتجديد</string>
+    <string name="salamtv_account_state_pending">لم يُفعّل بعد — أدخل رمز التفعيل</string>
+    <string name="salamtv_account_state_disabled">موقوف — راجع الموزّع</string>
+    <string name="salamtv_account_loading">جارٍ قراءة اشتراكك…</string>
+    <string name="salamtv_account_offline">تعذّر الوصول إلى الخادم. هذا آخر ما عرفناه.</string>
+    <string name="salamtv_account_refresh">تحديث</string>
+    <string name="salamtv_register_open">إنشاء حساب</string>
+    <string name="salamtv_register_title">إنشاء حساب</string>
+    <string name="salamtv_register_hint">اختر اسم مستخدم وكلمة مرور، ثمّ أدخل الرمز الذي اشتريته من الموزّع.</string>
+    <string name="salamtv_register_code_optional">رمز التفعيل (اختياري)</string>
+    <string name="salamtv_register_action">إنشاء</string>
+    <string name="salamtv_register_working">جارٍ الإنشاء…</string>
+    <string name="salamtv_register_have_account">لديّ حساب بالفعل</string>
 </resources>

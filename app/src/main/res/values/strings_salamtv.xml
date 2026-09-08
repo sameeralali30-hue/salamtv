@@ -32,4 +32,28 @@
     <string name="salamtv_redeem_action">Activate</string>
     <string name="salamtv_redeem_working">Activating…</string>
     <string name="salamtv_redeem_offline">Could not connect. Check your internet.</string>
+    <!-- حساب المشترك: ما يراه في الإعدادات -->
+    <string name="salamtv_account">My account</string>
+    <string name="salamtv_account_desc">Your plan, when it started and when it ends</string>
+    <string name="salamtv_account_username">Username</string>
+    <string name="salamtv_account_plan">Plan</string>
+    <string name="salamtv_account_started">Started</string>
+    <string name="salamtv_account_ends">Ends</string>
+    <string name="salamtv_account_days_left">Days left</string>
+    <string name="salamtv_account_open">Open subscription</string>
+    <string name="salamtv_account_state_active">Active</string>
+    <string name="salamtv_account_state_expired">Expired — enter an activation code to renew</string>
+    <string name="salamtv_account_state_pending">Not activated yet — enter your activation code</string>
+    <string name="salamtv_account_state_disabled">Suspended — contact your reseller</string>
+    <string name="salamtv_account_loading">Reading your subscription…</string>
+    <string name="salamtv_account_offline">Could not reach the server. Showing what we last knew.</string>
+    <string name="salamtv_account_refresh">Refresh</string>
+    <!-- إنشاء حساب من التطبيق -->
+    <string name="salamtv_register_open">Create an account</string>
+    <string name="salamtv_register_title">Create an account</string>
+    <string name="salamtv_register_hint">Choose a username and password, then enter the code you bought from your reseller.</string>
+    <string name="salamtv_register_code_optional">Activation code (optional)</string>
+    <string name="salamtv_register_action">Create</string>
+    <string name="salamtv_register_working">Creating…</string>
+    <string name="salamtv_register_have_account">I already have an account</string>
 </resources>

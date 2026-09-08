@@ -311,6 +311,8 @@ fun SettingsScreen(
     val autoPlayNext by settingsVm.autoPlayNext.collectAsStateWithLifecycle()
     val updateCheckOnStart by settingsVm.updateCheckOnStart.collectAsStateWithLifecycle()
     var showSignOut by remember { mutableStateOf(false) }
+    var showAccount by remember { mutableStateOf(false) }
+    var showAccountRedeem by remember { mutableStateOf(false) }
     val channelNumbers by settingsVm.directTune.collectAsStateWithLifecycle()
     val quickPinned by settingsVm.quickPinnedKeys.collectAsStateWithLifecycle()
     val catchupTz by settingsVm.catchupTimezone.collectAsStateWithLifecycle()
@@ -799,10 +801,14 @@ fun SettingsScreen(
            والمفضّلات معه. */
         *(if (!tv.own.owntv.BuildConfig.SALAMTV_LOCKED) emptyArray() else arrayOf(
         RootRow(
-            "salamtv_sign_out", TileTone.SECONDARY, OwnTVIcon.PERSON,
-            title = stringResource(R.string.salamtv_sign_out),
-            desc = stringResource(R.string.salamtv_sign_out_confirm),
-            onClick = { showSignOut = true },
+            "salamtv_account", TileTone.SECONDARY, OwnTVIcon.PERSON,
+            title = stringResource(R.string.salamtv_account),
+            desc = stringResource(R.string.salamtv_account_desc),
+            // ⚠ كان هذا الصفّ «تسجيل خروج» وحده. فمن أراد أن يعرف متى ينتهي
+            //   اشتراكه لم يجد أين، ومن اشترى رمز تجديد لم يجد أين يُدخله إلا
+            //   بعد أن يخرج — وهو آخر ما يخطر ببال من يريد أن يدفع لنا.
+            //   الثلاثة الآن حيث يبحث عنها: تحت «حسابي».
+            onClick = { settingsVm.refreshSubscription(); showAccount = true },
         ),
         )),
         RootRow(
@@ -1379,6 +1385,33 @@ fun SettingsScreen(
             onReset = { settingsVm.setEpgOffsetMinutes(0) },
             onDismiss = { showEpgOffset = false },
         ) }
+    }
+    if (showAccount) {
+        val subscription by settingsVm.subscription.collectAsStateWithLifecycle()
+        tv.own.owntv.features.settings.SubscriberAccountDialog(
+            status = subscription,
+            loading = subscription == null,
+            onRedeem = { showAccount = false; showAccountRedeem = true },
+            onSignOut = { showAccount = false; showSignOut = true },
+            onDismiss = { showAccount = false },
+        )
+    }
+    if (showAccountRedeem) {
+        val redeemUi by settingsVm.accountRedeem.collectAsStateWithLifecycle()
+        val subscription by settingsVm.subscription.collectAsStateWithLifecycle()
+        tv.own.owntv.features.setup.RedeemDialog(
+            // داخل الحساب نعرف اسمه، فلا نسأله عمّا نعرفه. وكلمة المرور
+            // تبقى في المصدر ولا تمرّ عبر الشاشة — الـViewModel يقرأها.
+            knownUsername = subscription?.username,
+            knownPassword = null,
+            askForAccount = false,
+            busy = redeemUi.busy,
+            message = redeemUi.message,
+            succeeded = redeemUi.ok,
+            offline = redeemUi.offline,
+            onSubmit = { _, _, code -> settingsVm.redeemFromAccount(code) },
+            onDismiss = { settingsVm.clearAccountRedeem(); showAccountRedeem = false },
+        )
     }
     if (showSignOut) {
         tv.own.owntv.features.settings.ConfirmDialog(

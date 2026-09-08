@@ -1,5 +1,6 @@
 package tv.own.owntv.di
 
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -45,6 +46,8 @@ val appModule = module {
     singleOf(::HomeFeedReader)
     viewModelOf(::HomeViewModel)
     single { tv.own.owntv.features.setup.SubscriberLoginClient(get(), get()) }
+    // مفرد: البصمة المحفوظة وقفل الفحص يجب أن يكونا واحداً لكلّ التطبيق.
+    single { tv.own.owntv.features.setup.SubscriptionWatcher(androidContext(), get()) }
     viewModelOf(::SetupViewModel)
     // Takes a Context first; Koin resolves it from androidContext().
     viewModelOf(::LiveViewModel)
@@ -90,6 +93,7 @@ val appModule = module {
             vodEngineStore = get(),
             playbackPrefs = get(),
             subscriberLogin = get(),
+            subscriptionWatcher = get(),
         )
     }
     viewModelOf(::HomeSettingsViewModel)

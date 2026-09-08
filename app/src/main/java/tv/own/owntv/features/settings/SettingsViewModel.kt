@@ -90,6 +90,7 @@ class SettingsViewModel(
     private val companion: tv.own.owntv.core.companion.CompanionController,
     private val vodEngineStore: tv.own.owntv.core.player.VodEngineStore,
     private val playbackPrefs: tv.own.owntv.core.player.PlaybackPrefsStore,
+    private val subscriptionWatcher: tv.own.owntv.features.setup.SubscriptionWatcher,
 ) : ViewModel() {
     companion object {
         private const val TAG = "OwnTVHome"
@@ -1235,6 +1236,94 @@ class SettingsViewModel(
      *
      * في وضع المزوّد للمشترك مصدرٌ واحد، فلا سؤال عن أيّها.
      */
+    /* ── اشتراك المشترك: عرضٌ وتجديد ─────────────────────────────────
+       ⚠ كان رمز التفعيل على شاشة الدخول وحدها، فمن انتهت باقته واشترى
+         رمز تجديد لم يجد أين يُدخله وهو داخلٌ في التطبيق — كان عليه أن
+         يخرج أوّلاً، وهو آخر ما يخطر ببال من يريد أن يدفع لنا. */
+
+    /** ما تقوله اللوحة عن هذا الاشتراك، أو null قبل أوّل ردّ. */
+    val subscription = subscriptionWatcher.status
+
+    data class AccountRedeemUi(
+        val busy: Boolean = false,
+        val message: String = "",
+        val ok: Boolean = false,
+        val offline: Boolean = false,
+    )
+
+    private val _accountRedeem = MutableStateFlow(AccountRedeemUi())
+    val accountRedeem: StateFlow<AccountRedeemUi> = _accountRedeem.asStateFlow()
+
+    fun clearAccountRedeem() { _accountRedeem.value = AccountRedeemUi() }
+
+    /** بيانات الاشتراك تُقرأ من المصدر — لا نحفظ نسخة ثانية منها. */
+    private suspend fun activeCredentials(): Pair<String, String>? {
+        val pid = settings.activeProfileId.first()
+        if (pid < 0L) return null
+        val src = sourceDao.observeForProfile(pid).first().firstOrNull() ?: return null
+        val u = src.username.orEmpty()
+        val p = src.password.orEmpty()
+        return if (u.isBlank() || p.isBlank()) null else u to p
+    }
+
+    /** يسأل اللوحة الآن — لزرّ «تحديث» ولفتح شاشة الحساب. */
+    fun refreshSubscription(force: Boolean = true) {
+        viewModelScope.launch {
+            val (u, p) = activeCredentials() ?: return@launch
+            subscriptionWatcher.check(u, p, force) { resyncCatalogue() }
+        }
+    }
+
+    /**
+     * تفعيل رمز تجديد من داخل الحساب.
+     *
+     * بعد النجاح تُعاد مزامنة الكتالوج فوراً: من دفع للتوّ ينظر في الشاشة،
+     * ولا يجوز أن يُطلب منه إغلاق التطبيق ليرى ما اشتراه.
+     */
+    fun redeemFromAccount(code: String) {
+        if (_accountRedeem.value.busy) return
+        _accountRedeem.value = AccountRedeemUi(busy = true)
+        viewModelScope.launch {
+            val creds = activeCredentials()
+            if (creds == null) {
+                _accountRedeem.value = AccountRedeemUi(offline = true)
+                return@launch
+            }
+            val (u, p) = creds
+            subscriberLogin.redeem(u, p, code)
+                .onSuccess { msg ->
+                    _accountRedeem.value = AccountRedeemUi(message = msg, ok = true)
+                    // البصمة تغيّرت حتماً — force حتى لا تمنع المهلة الفحص.
+                    subscriptionWatcher.check(u, p, force = true) { }
+                    resyncCatalogue()
+                }
+                .onFailure { e ->
+                    val ex = e as? tv.own.owntv.features.setup.SubscriberLoginClient.LoginException
+                    _accountRedeem.value = AccountRedeemUi(
+                        message = ex?.message.orEmpty(),
+                        offline = ex?.code == tv.own.owntv.features.setup.SubscriberLoginClient.CODE_OFFLINE,
+                    )
+                }
+        }
+    }
+
+    /** يعيد بناء كتالوج المصدر الحالي — REPLACE لأنّ ما ينتظر بُني على خطّة قديمة. */
+    private fun resyncCatalogue() {
+        viewModelScope.launch {
+            val pid = settings.activeProfileId.first()
+            if (pid < 0L) return@launch
+            val src = sourceDao.observeForProfile(pid).first().firstOrNull() ?: return@launch
+            val counts = importFinalizer.contentCounts(src.id)
+            catalogSyncScheduler.enqueueSync(
+                src.id,
+                reason = "subscription_changed",
+                contentTypes = tv.own.owntv.core.sync.SyncContentTypes.enabledOf(src),
+                baseItemCount = counts.channels + counts.movies + counts.series,
+                policy = androidx.work.ExistingWorkPolicy.REPLACE,
+            )
+        }
+    }
+
     fun signOutAccount(onDone: () -> Unit = {}) {
         viewModelScope.launch {
             /* ⚠ كانت تقرأ `sources.value`، وهي StateFlow بـWhileSubscribed:
@@ -1252,6 +1341,8 @@ class SettingsViewModel(
                 // هذا الوضع — نخرج منها جميعاً: «تسجيل الخروج» يعني الخروج،
                 // لا الخروج من واحدٍ وترك الباقي.
                 else -> {
+                    // البصمة تُنسى مع الحساب، وإلا بقيت لمن يدخل بعده.
+                    list.firstOrNull()?.username?.let { subscriptionWatcher.forget(it) }
                     list.forEach { signOut(it) }
                     onDone()
                 }

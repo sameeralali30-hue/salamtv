@@ -59,6 +59,7 @@ class ShellViewModel(
     private val importFinalizer: ImportFinalizer,
     private val weatherRepository: WeatherRepository,
     private val navVisibility: NavVisibility,
+    private val subscriptionWatcher: tv.own.owntv.features.setup.SubscriptionWatcher,
 ) : ViewModel() {
 
     companion object {
@@ -115,6 +116,50 @@ class ShellViewModel(
      * Auto-refresh enqueues use [ExistingWorkPolicy.KEEP] so a source already syncing/queued is left alone
      * (no churn). Manual re-synces still use REPLACE (handled at their call sites).
      */
+    /** ما تقوله اللوحة عن اشتراك هذا الجهاز — تعرضه شاشة «حسابي». */
+    val subscription = subscriptionWatcher.status
+
+    /**
+     * يسأل اللوحة إن تغيّرت خطّة المشترك، ويعيد بناء الكتالوج إن تغيّرت.
+     *
+     * ⚠ كان على المشترك أن يخرج ويدخل — أو يمسح التطبيق — ليرى ما اشتراه.
+     *   يُستدعى عند الإقلاع وعند كلّ عودة إلى التطبيق، و[force] لتفعيلٍ وقع
+     *   للتوّ فلا ينتظر من دفع دقائق ليرى أثر دفعه.
+     *
+     * البيانات تُقرأ من المصدر نفسه: هي التي سجّل بها دخوله، ولا نحفظ نسخة
+     * ثانية منها في مكان آخر.
+     */
+    fun checkSubscription(force: Boolean = false) {
+        if (!tv.own.owntv.BuildConfig.SALAMTV_LOCKED) return
+        viewModelScope.launch {
+            val pid = currentProfileId() ?: return@launch
+            val source = sourceRepository.observeSources(pid).first().firstOrNull() ?: return@launch
+            val user = source.username.orEmpty()
+            val pass = source.password.orEmpty()
+            if (user.isBlank() || pass.isBlank()) return@launch
+
+            subscriptionWatcher.check(user, pass, force) {
+                // تغيّرت الخطّة: يُعاد بناء الكتالوج فوراً، بلا خروجٍ ولا مسح.
+                // REPLACE لا KEEP — مزامنةٌ دوريّة قائمة على الخطّة القديمة
+                // لا فائدة من انتظارها.
+                viewModelScope.launch {
+                    val counts = importFinalizer.contentCounts(source.id)
+                    Log.i(TAG, "subscription changed — resyncing sourceId=${source.id}")
+                    catalogSyncScheduler.enqueueSync(
+                        source.id,
+                        reason = "subscription_changed",
+                        contentTypes = tv.own.owntv.core.sync.SyncContentTypes.enabledOf(source),
+                        baseItemCount = counts.channels + counts.movies + counts.series,
+                        policy = ExistingWorkPolicy.REPLACE,
+                    )
+                }
+            }
+        }
+    }
+
+    /** يُنسي بصمة حسابٍ خرج منه صاحبه. */
+    fun forgetSubscription(username: String) = subscriptionWatcher.forget(username)
+
     fun checkAutoRefresh(includeStartup: Boolean) {
         if (includeStartup) {
             if (coldStartCheckDone) return
