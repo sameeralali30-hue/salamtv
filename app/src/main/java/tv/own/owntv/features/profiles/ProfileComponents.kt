@@ -9,7 +9,6 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -66,9 +65,15 @@ internal fun ProfileScrim(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                // اللوح يمرّر (dialogPanel)، لكنّه لا يتقلّص للوحة المفاتيح إلا
-                // بهذه. تخصّ نافذة رمز التفعيل ومحرّر البروفايل معاً.
-                .imePadding()
+                /* ⚠ كانت هنا imePadding، فأفسدت أكثر ممّا أصلحت: اللوح يمرّر
+                     نفسه أصلاً إلى الحقل المُركَّز (bringIntoView في
+                     OwnTVTextField مع TvImeMetrics). وإضافةُ الحشو تُقلّص
+                     الصندوق بينما التمرير قد أزاح اللوح، فإذا أُغلقت لوحة
+                     المفاتيح عاد الارتفاع ولم يعد التمرير — فيبقى اللوح
+                     معلّقاً في أعلى الشاشة نصفَ ظاهر. رأيتُه على الجهاز.
+
+                     الآليّة القائمة تكفي هذه النوافذ. وimePadding تبقى حيث
+                     لا آليّة أخرى: شاشة الدخول، وهي ليست نافذة. */
                 .modalScrim(),
             contentAlignment = Alignment.Center,
         ) {

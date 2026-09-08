@@ -51,7 +51,7 @@
     <!-- إنشاء حساب من التطبيق -->
     <string name="salamtv_register_open">Create an account</string>
     <string name="salamtv_register_title">Create an account</string>
-    <string name="salamtv_register_hint">Choose a username and password, then enter the code you bought from your reseller.</string>
+    <string name="salamtv_register_hint">Choose a username and password. You will enter your activation code next.</string>
     <string name="salamtv_register_code_optional">Activation code (optional)</string>
     <string name="salamtv_register_action">Create</string>
     <string name="salamtv_register_working">Creating…</string>

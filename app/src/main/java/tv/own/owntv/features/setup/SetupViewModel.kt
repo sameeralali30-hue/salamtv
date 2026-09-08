@@ -153,21 +153,30 @@ class SetupViewModel(
     fun clearRegister() { _registerUi.value = RegisterUi() }
 
     /**
-     * يُنشئ الحساب — ومعه الرمز إن كان بيده — ثمّ يُسجّل الدخول به مباشرةً.
+     * يُنشئ الحساب فقط. لا رمز، ولا دخول بعده.
      *
-     * الدخول التلقائي مقصود: من أنشأ حسابه للتوّ يعرف بياناته، وإعادة
-     * كتابتها في شاشة الدخول خطوةٌ لا تُضيف شيئاً إلا فرصةً لخطأٍ مطبعي.
+     * ⚠ الدخول هنا كان يفشل دائماً وهو ما لم أتوقّعه: اللوحة ترفض دخول
+     *   الحساب غير المفعَّل («حسابك لم يُفعَّل بعد») — وهي محقّة، فحسابٌ
+     *   بلا خطّة لا قنوات له ولا شيء يُستورَد. فالرمز ليس خطوةً تُؤجَّل بل
+     *   شرطٌ للدخول.
+     *
+     *   والترتيب الصحيح إذن: يُنشأ الحساب، ثمّ تُفتح نافذة الرمز وقد عرفت
+     *   بياناته فلا يكتب إلا الرمز، ثمّ يدخل التطبيق من تلقاء نفسه.
+     *
+     * [onCreated] يستقبل ما أُنشئ به الحساب لتُملأ به نافذة الرمز.
      */
-    fun register(username: String, password: String, code: String, onSignedIn: () -> Unit) {
+    fun register(
+        username: String,
+        password: String,
+        onCreated: (username: String, password: String) -> Unit,
+    ) {
         if (_registerUi.value.busy) return
         _registerUi.value = RegisterUi(busy = true)
         viewModelScope.launch {
-            subscriberLogin.register(username, password, code)
+            subscriberLogin.register(username, password, "")
                 .onSuccess { msg ->
                     _registerUi.value = RegisterUi(message = msg, ok = true)
-                    // الحساب قائم — ندخل به. وإن كان الرمز قد فشل فالحساب
-                    // معلَّق، وشاشة الدخول تقول ذلك بنصّ اللوحة.
-                    signIn(username, password) { onSignedIn() }
+                    onCreated(username, password)
                 }
                 .onFailure { e ->
                     val ex = e as? SubscriberLoginClient.LoginException
@@ -192,13 +201,23 @@ class SetupViewModel(
     private val _redeemUi = MutableStateFlow(RedeemUi())
     val redeemUi: StateFlow<RedeemUi> = _redeemUi.asStateFlow()
 
-    fun redeem(username: String, password: String, code: String) {
+    /**
+     * @param onActivated يقع بعد تفعيلٍ ناجح — تستعمله شاشة الدخول لتدخل
+     *        بالحساب من تلقائها. فمن فعّل للتوّ لا يُطلب منه أن يكتب اسمه
+     *        وكلمة مروره مرّة ثانية في الشاشة التي تحته.
+     */
+    fun redeem(
+        username: String,
+        password: String,
+        code: String,
+        onActivated: (username: String, password: String) -> Unit = { _, _ -> },
+    ) {
         if (_redeemUi.value.busy) return
         _redeemUi.value = RedeemUi(busy = true)
         viewModelScope.launch {
             val r = subscriberLogin.redeem(username, password, code)
             _redeemUi.value = r.fold(
-                onSuccess = { RedeemUi(message = it, ok = true) },
+                onSuccess = { RedeemUi(message = it, ok = true).also { _ -> onActivated(username, password) } },
                 onFailure = { e ->
                     // رسالة اللوحة إن وُجدت. وإن غابت فالعطل نقلٌ لا رفض،
                     // ونصّه في الموارد لا هنا: `offline` تقوله الواجهة.

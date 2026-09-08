@@ -91,11 +91,40 @@ fun OwnTVTextField(
      * يُبلغ إلا بإغلاقها. ومفتاح ✓ في متناول الإبهام أصلاً.
      */
     onImeDone: (() -> Unit)? = null,
+    /**
+     * ما يفعله مفتاح «التالي» — وحين يُمرَّر يصير المفتاح «التالي» لا ✓.
+     *
+     * ⚠ بلا هذا كان الانتقال من حقلٍ إلى الذي تحته يعني: ✓ فتُغلق اللوحة،
+     *   ثمّ لمسة على الحقل التالي، ثمّ انتظار اللوحة وهي تُفتح من جديد.
+     *   ثلاث حركات ومئات الأجزاء من الثانية بين كلّ حقلين — وهو ما يجعل
+     *   نافذةً من حقلين تبدو بطيئة وثقيلة.
+     */
+    onImeNext: (() -> Unit)? = null,
+    /**
+     * يبدأ الحقل في وضع الكتابة، فتُفتح لوحة المفاتيح مع الشاشة.
+     *
+     * ⚠ فتحُ لوحة المفاتيح كلّف نحو ثانيتين حين قِستُه — وأكثرها إقلاعُ
+     *   اللوحة نفسها لا التطبيق. فما نملكه ليس تسريعَها بل ألّا ندفع ثمنها
+     *   مرّتين: نافذةٌ لا عمل فيها إلا الكتابة تفتح حقلها الأوّل جاهزاً،
+     *   فتسقط لمسةٌ وانتظارٌ كامل من الطريق.
+     *
+     *   لا تُستعمل إلا حيث يكون الحقل هو الغرض الوحيد من الشاشة.
+     */
+    startEditing: Boolean = false,
+    /**
+     * ارفعها ليدخل الحقل وضع الكتابة — لنقل الكتابة من حقلٍ إلى الذي تحته.
+     *
+     * ⚠ [focusRequester] لا يكفي: هو مربوطٌ بغلاف الحقل لا بحقل الكتابة
+     *   داخله. فمفتاح «التالي» كان ينقل التركيز إلى الغلاف وتُغلق لوحة
+     *   المفاتيح، فيضطرّ المشترك إلى لمس الحقل على كلّ حال — أسوأ ممّا كان
+     *   قبل «التالي». رأيتُه على الجهاز: الاسم نزل والكلمة لم تنزل.
+     */
+    requestEditing: Boolean = false,
 ) {
     val colors = OwnTVTheme.colors
     val interaction = remember { MutableInteractionSource() }
     val fieldFocused by interaction.collectIsFocusedAsState()
-    var editing by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf(startEditing) }
     // True once the inner field has genuinely held focus — see onFocusChanged below.
     var hadFocus by remember { mutableStateOf(false) }
     val pillFocus = remember { FocusRequester() }
@@ -121,6 +150,7 @@ fun OwnTVTextField(
         else -> colors.outlineVariant
     }
 
+    LaunchedEffect(requestEditing) { if (requestEditing) editing = true }
     LaunchedEffect(editing) {
         if (editing) {
             // Tell the shared popup before showing the IME. If this TV publishes no inset/frame
@@ -211,13 +241,20 @@ fun OwnTVTextField(
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.onSurface),
                     singleLine = true,
                     cursorBrush = SolidColor(colors.primary),
-                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = {
-                        editing = false
-                        keyboard?.hide()
-                        runCatching { pillFocus.requestFocus() }
-                        onImeDone?.invoke()
-                    }),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = keyboardType,
+                        imeAction = if (onImeNext != null) ImeAction.Next else ImeAction.Done,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            editing = false
+                            keyboard?.hide()
+                            runCatching { pillFocus.requestFocus() }
+                            onImeDone?.invoke()
+                        },
+                        // «التالي» لا يُغلق اللوحة: الحقل التالي يفتح نفسه.
+                        onNext = { onImeNext?.invoke() },
+                    ),
                     visualTransformation = if (isPassword && !showPassword) PasswordVisualTransformation() else VisualTransformation.None,
                     decorationBox = { inner ->
                         Box(Modifier.fillMaxWidth()) {

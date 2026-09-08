@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -27,32 +28,32 @@ import tv.own.owntv.ui.theme.OwnTVTheme
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- *  إنشاء حساب من داخل التطبيق.
+ *  إنشاء حساب — اسمٌ وكلمة مرور، لا غير.
  * ───────────────────────────────────────────────────────────────────────────
- *  ⚠ الرمز حاملٌ لقيمة لا يعرف صاحبه، والأيام تُضاف إلى حساب. فمن اشترى
- *    رمزاً من وكيل ولا حساب له كان عليه أن يفتح المتصفّح ويسجّل في الموقع
- *    ثمّ يعود إلى التطبيق. ومن لم يعرف ذلك ضغط «لديك رمز تفعيل؟» وأدخل
- *    اسماً لم يُنشئه بعد، فقيل له «اسم المستخدم أو كلمة المرور غير صحيحة» —
- *    وهي رسالة صادقة لا تدلّه على شيء، فيتّصل بالدعم أو ينصرف.
+ *  ⚠ أوّل نسخة وضعت حقل «رمز التفعيل» في هذه النافذة، وكان خطأً من وجهين:
  *
- *  ═══ أربعة قرارات ═══
+ *    • أوهم أنّ المشترك يُنشئ الرمز كما يُنشئ اسمه. والرمز لا يُنشأ هنا —
+ *      نحن نولّده في اللوحة والموزّع يبيعه.
  *
- *  ① الرمز حقلٌ في نفس النافذة، اختياري.
- *     من معه رمز يفرغ في خطوة واحدة ولا يرى شاشةً فارغة قطّ. ومن ليس معه
- *     يُنشئ حسابه ويفعّله لاحقاً من «حسابي». نافذتان تعنيان من ينشئ حساباً
- *     ثمّ ينسى الرمز في جيبه.
+ *    • ربط فشلين لا علاقة بينهما. من قيل له «الاسم محجوز» غيّر اسمه وضغط
+ *      «إنشاء» فقيل له «الرمز غير صحيح» — لأنّ الرمز كان قد استُهلك في
+ *      المحاولة التي نجح فيها الحساب. فبدا كأنّ التطبيق يمنعه بلا سبب.
+ *
+ *    الرمز الآن نافذته وحده، بعد أن يقوم الحساب.
+ *
+ *  ═══ ثلاثة قرارات ═══
+ *
+ *  ① الحقل الأوّل يفتح نفسه، و«التالي» ينقل إلى الثاني.
+ *     ⚠ كلّ لمسة على حقل تعني فتح لوحة مفاتيح وانتظار حركتها. حقلان
+ *       يعنيان لمستين وإغلاقاً وفتحاً بينهما، وهو ما يجعل نافذةً بسيطة
+ *       تبدو ثقيلة. الآن: تُفتح النافذة فيكتب، «التالي»، يكتب، ✓.
  *
  *  ② شروط الاسم وكلمة المرور تُقال قبل أن يُرسل.
- *     الشرط الذي لا يُعرف إلا بعد الرفض يُجرّب مرّتين وثلاثاً. وهو مكتوب
- *     تحت الحقلين لا في رسالة خطأ.
+ *     الشرط الذي لا يُعرف إلا بعد الرفض يُجرَّب مرّتين وثلاثاً.
  *
  *  ③ ما ترفضه اللوحة يُعرض بنصّها.
- *     «هذا الاسم محجوز» أكثر ما سيقع، وهو غير «كلمة المرور قصيرة» وغير
- *     «الرمز مستعمَل». ودمجها في «فشل» يجعل كلّ حالة مكالمةَ دعم.
- *
- *  ④ الحروف الكبيرة والمسافات في الرمز تُصلَح لا تُرفض.
- *     من ينسخ رمزاً من واتساب يجرّ معه مسافة. رفضُ رمزٍ صحيح بسببها عيبٌ
- *     فينا لا فيه.
+ *     «هذا الاسم محجوز» غير «كلمة المرور قصيرة»، ودمجهما في «فشل» يجعل
+ *     كلّ حالة مكالمةَ دعم.
  * ═══════════════════════════════════════════════════════════════════════════
  */
 @Composable
@@ -61,14 +62,17 @@ fun RegisterDialog(
     message: String?,
     succeeded: Boolean,
     offline: Boolean,
-    onSubmit: (username: String, password: String, code: String) -> Unit,
+    onSubmit: (username: String, password: String) -> Unit,
     onHaveAccount: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = OwnTVTheme.colors
     var user by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
-    var code by remember { mutableStateOf("") }
+    val userFocus = remember { FocusRequester() }
+    val passFocus = remember { FocusRequester() }
+    // «التالي» يرفعها فيفتح حقل كلمة المرور نفسه بلا لمسة ولا إغلاق للوحة.
+    var editingPass by remember { mutableStateOf(false) }
 
     // ② نفس شروط اللوحة، مطبَّقة هنا قبل الإرسال
     val canSubmit = !busy && user.trim().length >= 3 && pass.length >= 8
@@ -92,6 +96,14 @@ fun RegisterDialog(
                 value = user,
                 onValueChange = { user = it.filter { c -> !c.isWhitespace() } },
                 label = stringResource(R.string.salamtv_login_username),
+                focusRequester = userFocus,
+                // ① يفتح نفسه: النافذة لا عمل فيها إلا الكتابة
+                startEditing = true,
+                // «التالي» ينقل بلا إغلاق اللوحة
+                onImeNext = {
+                    runCatching { passFocus.requestFocus() }
+                    editingPass = true
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(10.dp))
@@ -101,15 +113,9 @@ fun RegisterDialog(
                 label = stringResource(R.string.salamtv_login_password),
                 isPassword = true,
                 keyboardType = KeyboardType.Password,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(10.dp))
-            OwnTVTextField(
-                value = code,
-                // ④ نُصلح ما يفسده النسخ بدل أن نرفضه
-                onValueChange = { code = it.uppercase().filter { c -> !c.isWhitespace() } },
-                label = stringResource(R.string.salamtv_register_code_optional),   // ①
-                onImeDone = { if (canSubmit) onSubmit(user.trim(), pass, code.trim()) },
+                focusRequester = passFocus,
+                requestEditing = editingPass,
+                onImeDone = { if (canSubmit) onSubmit(user.trim(), pass) },
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -139,7 +145,7 @@ fun RegisterDialog(
                     stringResource(
                         if (busy) R.string.salamtv_register_working else R.string.salamtv_register_action,
                     ),
-                    onClick = { if (canSubmit) onSubmit(user.trim(), pass, code.trim()) },
+                    onClick = { if (canSubmit) onSubmit(user.trim(), pass) },
                     enabled = canSubmit,
                 )
             }

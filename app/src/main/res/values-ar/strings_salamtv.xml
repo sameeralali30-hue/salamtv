@@ -41,7 +41,7 @@
     <string name="salamtv_account_refresh">تحديث</string>
     <string name="salamtv_register_open">إنشاء حساب</string>
     <string name="salamtv_register_title">إنشاء حساب</string>
-    <string name="salamtv_register_hint">اختر اسم مستخدم وكلمة مرور، ثمّ أدخل الرمز الذي اشتريته من الموزّع.</string>
+    <string name="salamtv_register_hint">اختر اسم مستخدم وكلمة مرور. رمز التفعيل في الخطوة التالية.</string>
     <string name="salamtv_register_code_optional">رمز التفعيل (اختياري)</string>
     <string name="salamtv_register_action">إنشاء</string>
     <string name="salamtv_register_working">جارٍ الإنشاء…</string>

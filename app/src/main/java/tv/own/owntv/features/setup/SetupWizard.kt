@@ -127,6 +127,8 @@ fun Onboarding(
     val registerUi by vm.registerUi.collectAsStateWithLifecycle()
     var showRedeem by rememberSaveable { mutableStateOf(false) }
     var showRegister by rememberSaveable { mutableStateOf(false) }
+    // بيانات حسابٍ أُنشئ للتوّ — تُملأ بها نافذة الرمز ثمّ يُدخَل بها.
+    var newAccount by remember { mutableStateOf<Pair<String, String>?>(null) }
     // بناء المزوّد: المشترك يسجّل الدخول ولا يختار خادماً ولا يضيف قائمة.
     val locked = tv.own.owntv.BuildConfig.SALAMTV_LOCKED
     var existing by remember { mutableStateOf<List<SourceEntity>>(emptyList()) }
@@ -283,26 +285,26 @@ fun Onboarding(
             )
         }
 
-        // إنشاء الحساب يعلو الخطوة كذلك — الرمز حاملٌ لقيمة والأيام تُضاف
-        // إلى حساب، فمن معه رمز ولا حساب له يبدأ من هنا.
+        // ═══ الإنشاء ثمّ الرمز ثمّ الدخول ═══
+        //
+        // ⚠ أوّل نسخة أخذت الرمز في نافذة الإنشاء ثمّ حاولت الدخول. وكلاهما
+        //   خطأ: الرمز يُولَّد في اللوحة ويبيعه الموزّع فلا يُنشئه المشترك
+        //   مع اسمه، واللوحة ترفض دخول الحساب غير المفعَّل أصلاً.
+        //
+        //   الآن: يُنشأ الحساب، ثمّ تُفتح نافذة الرمز وقد عرفت بياناته فلا
+        //   يكتب إلا الرمز، ثمّ يدخل التطبيق وحده.
         if (showRegister) {
             RegisterDialog(
                 busy = registerUi.busy,
                 message = registerUi.message,
                 succeeded = registerUi.ok,
                 offline = registerUi.offline,
-                onSubmit = { u, p, code ->
-                    vm.register(u, p, code) {
-                        // دخل بالحساب الذي أنشأه للتوّ — يُكمل كأيّ داخل.
+                onSubmit = { u, p ->
+                    vm.register(u, p) { user, pass ->
+                        newAccount = user to pass
                         showRegister = false
                         vm.clearRegister()
-                        step = if (signInProfileId != null) {
-                            vm.useProfile(signInProfileId)
-                            vm.finishSignIn { importOrigin = Step.SIGN_IN }
-                            Step.IMPORTING
-                        } else {
-                            Step.CREATE_PROFILE
-                        }
+                        showRedeem = true
                     }
                 },
                 onHaveAccount = { showRegister = false; vm.clearRegister() },
@@ -314,14 +316,31 @@ fun Onboarding(
         // قبل أن يكون له حساب داخل التطبيق.
         if (showRedeem) {
             RedeemDialog(
-                knownUsername = null,
-                knownPassword = null,
+                // من أنشأ حسابه للتوّ نعرف بياناته — فلا يكتب إلا الرمز.
+                knownUsername = newAccount?.first,
+                knownPassword = newAccount?.second,
                 busy = redeemUi.busy,
                 message = redeemUi.message,
                 succeeded = redeemUi.ok,
                 offline = redeemUi.offline,
-                onSubmit = { u, p, c -> vm.redeem(u, p, c) },
-                onDismiss = { showRedeem = false; vm.clearRedeem() },
+                onSubmit = { u, p, c ->
+                    vm.redeem(u, p, c) { user, pass ->
+                        // فُعّل — فيدخل وحده. الحساب صار له خطّة وقنوات.
+                        showRedeem = false
+                        vm.clearRedeem()
+                        newAccount = null
+                        vm.signIn(user, pass) {
+                            step = if (signInProfileId != null) {
+                                vm.useProfile(signInProfileId)
+                                vm.finishSignIn { importOrigin = Step.SIGN_IN }
+                                Step.IMPORTING
+                            } else {
+                                Step.CREATE_PROFILE
+                            }
+                        }
+                    }
+                },
+                onDismiss = { showRedeem = false; vm.clearRedeem(); newAccount = null },
             )
         }
         // Semi-auto EPG: after the first playlist imports, ask → sync (live count) → done (overlays "All set!").
