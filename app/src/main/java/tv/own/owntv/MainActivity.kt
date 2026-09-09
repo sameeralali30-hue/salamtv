@@ -1,6 +1,7 @@
 package tv.own.owntv
 
 import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -323,6 +324,21 @@ class MainActivity : ComponentActivity() {
                 }
                 lifecycleOwner.lifecycle.addObserver(observer)
                 onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+            }
+
+            // ═══ النبض: التعديل يصل والتطبيق مفتوح ═══
+            //
+            // ⚠ ما فوق يفحص عند الفتح والعودة، وهو يكفي هاتفاً يُفتح ويُغلق
+            //   عشرات المرّات في اليوم. ولا يكفي شاشةً تُترك مفتوحة أربع
+            //   ساعات — وهي الحال الغالبة على أجهزة التلفاز: من رُقّيت خطّته
+            //   وهو يشاهد بقي على القديم إلى أن يُطفئ الجهاز.
+            //
+            //   `repeatOnLifecycle(STARTED)` يقيّد النبض بالمقدّمة: يبدأ حين
+            //   تُرى الشاشة ويقف حين تُغادر، فلا نبضة واحدة والجهاز في جيبه
+            //   أو أمام قناةٍ أخرى.
+            LifecycleStartEffect(lifecycleOwner, viewModel) {
+                viewModel.startSubscriptionBeat()
+                onStopOrDispose { viewModel.stopSubscriptionBeat() }
             }
 
             OwnTVTheme(

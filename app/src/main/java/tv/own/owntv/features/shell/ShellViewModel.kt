@@ -132,28 +132,59 @@ class ShellViewModel(
     fun checkSubscription(force: Boolean = false) {
         if (!tv.own.owntv.BuildConfig.SALAMTV_LOCKED) return
         viewModelScope.launch {
+            val (user, pass) = subscriberCredentials() ?: return@launch
+            subscriptionWatcher.check(user, pass, force) { rebuildCatalogue() }
+        }
+    }
+
+    /**
+     * نبضةٌ ما دام التطبيق في المقدّمة — يُشغّلها `MainActivity` مع دورة
+     * حياة الشاشة، وتقف من نفسها حين يغادر.
+     *
+     * ⚠ الفحص عند الفتح والعودة وحدهما لا يكفي شاشةً تُترك مفتوحة ساعات،
+     *   وهي حال أجهزة التلفاز. من رُقّيت خطّته وهو يشاهد كان يبقى على
+     *   القديم إلى أن يُطفئ الجهاز.
+     */
+    fun startSubscriptionBeat() {
+        if (!tv.own.owntv.BuildConfig.SALAMTV_LOCKED) return
+        subscriptionWatcher.startBeating(
+            scope = viewModelScope,
+            credentials = { subscriberCredentials() },
+            onChanged = { rebuildCatalogue() },
+        )
+    }
+
+    /** يوقف النبض — خروجٌ من المقدّمة. */
+    fun stopSubscriptionBeat() = subscriptionWatcher.stopBeating()
+
+    /** بيانات المشترك تُقرأ من المصدر نفسه — لا نحفظ نسخة ثانية منها. */
+    private suspend fun subscriberCredentials(): Pair<String, String>? {
+        val pid = currentProfileId() ?: return null
+        val source = sourceRepository.observeSources(pid).first().firstOrNull() ?: return null
+        val u = source.username.orEmpty()
+        val p = source.password.orEmpty()
+        return if (u.isBlank() || p.isBlank()) null else u to p
+    }
+
+    /**
+     * تبدّلت البصمة: يُعاد بناء الكتالوج فوراً، بلا خروجٍ ولا مسح بيانات.
+     *
+     * REPLACE لا KEEP — مزامنةٌ دوريّة تنتظر في الطابور بُنيت على الخطّة
+     * القديمة، ولا فائدة من انتظارها.
+     */
+    private fun rebuildCatalogue() {
+        viewModelScope.launch {
             val pid = currentProfileId() ?: return@launch
             val source = sourceRepository.observeSources(pid).first().firstOrNull() ?: return@launch
-            val user = source.username.orEmpty()
-            val pass = source.password.orEmpty()
-            if (user.isBlank() || pass.isBlank()) return@launch
-
-            subscriptionWatcher.check(user, pass, force) {
-                // تغيّرت الخطّة: يُعاد بناء الكتالوج فوراً، بلا خروجٍ ولا مسح.
-                // REPLACE لا KEEP — مزامنةٌ دوريّة قائمة على الخطّة القديمة
-                // لا فائدة من انتظارها.
-                viewModelScope.launch {
-                    val counts = importFinalizer.contentCounts(source.id)
-                    Log.i(TAG, "subscription changed — resyncing sourceId=${source.id}")
-                    catalogSyncScheduler.enqueueSync(
-                        source.id,
-                        reason = "subscription_changed",
-                        contentTypes = tv.own.owntv.core.sync.SyncContentTypes.enabledOf(source),
-                        baseItemCount = counts.channels + counts.movies + counts.series,
-                        policy = ExistingWorkPolicy.REPLACE,
-                    )
-                }
-            }
+            val counts = importFinalizer.contentCounts(source.id)
+            Log.i(TAG, "subscription changed — resyncing sourceId=${source.id}")
+            catalogSyncScheduler.enqueueSync(
+                source.id,
+                reason = "subscription_changed",
+                contentTypes = tv.own.owntv.core.sync.SyncContentTypes.enabledOf(source),
+                baseItemCount = counts.channels + counts.movies + counts.series,
+                policy = ExistingWorkPolicy.REPLACE,
+            )
         }
     }
 

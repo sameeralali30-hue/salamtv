@@ -487,6 +487,7 @@
 6	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	password
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	plan
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	plan_name
+1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	poll
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	redeemed
 2	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	refused
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	register ok (redeemed=${json.optBoolean("redeemed")})

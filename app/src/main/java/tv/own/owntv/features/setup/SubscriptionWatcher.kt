@@ -4,7 +4,10 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,6 +48,19 @@ import kotlinx.coroutines.sync.withLock
  *  ⑤ الحالة تُنشر كما هي حتّى لو لم تتغيّر.
  *     شاشة «حسابي» تعرض ما في [status]. فحصٌ لم يجد تغييراً ما زال يُحدّث
  *     «يتبقّى ١٢ يوماً» إلى «١١».
+ *
+ *  ⑥ نبضٌ ما دام في المقدّمة، لا فحصٌ عند الفتح وحده.
+ *     ⚠ كان الفحص عند الإقلاع وعند العودة من الخلفية فقط. وهذا يكفي هاتفاً
+ *       يُفتح ويُغلق عشرات المرّات، ولا يكفي شاشةً تُترك مفتوحة أربع ساعات
+ *       — وهي الحالة الغالبة على أجهزة التلفاز. فمن رُقّيت خطّته وهو يشاهد
+ *       بقي على القديم إلى أن يُطفئ الجهاز، أي إلى الغد.
+ *
+ *       والنبضة ثلاثمئة بايت: مئةٌ منها في الساعة أرخص من ثانيةٍ واحدة من
+ *       البثّ.
+ *
+ *  ⑦ إيقاع النبض يأتي من الخادم.
+ *     `poll` في الردّ. القيمة تُحدّ بين دقيقة وربع ساعة هنا، فلا يستطيع ردٌّ
+ *     مشوّه — أو خادمٌ منتحَل — أن يجعل الجهاز ينبض كلّ ثانية.
  * ═══════════════════════════════════════════════════════════════════════════
  */
 class SubscriptionWatcher(
@@ -61,6 +77,18 @@ class SubscriptionWatcher(
     val status: StateFlow<SubscriberLoginClient.Status?> = _status.asStateFlow()
 
     private var lastCheckAtMs = 0L
+
+    /**
+     * ⑦ ما بين نبضتين، بالملّي ثانية. يُحدَّث من كلّ ردّ ناجح.
+     *
+     * `@Volatile` لأنّ الكاتب هو خيط الشبكة والقارئ حلقةُ النبض على الخيط
+     * الرئيسي.
+     */
+    @Volatile
+    private var pollIntervalMs: Long = DEFAULT_POLL_MS
+
+    /** ⑥ حلقةٌ واحدة لا أكثر — فتحُ شاشةٍ فوق أخرى لا يضاعف النبض. */
+    private var beat: Job? = null
 
     /**
      * يفحص إن مضى ما يكفي، ويستدعي [onChanged] حين تتبدّل البصمة فعلاً.
@@ -89,6 +117,10 @@ class SubscriptionWatcher(
                 }
                 lastCheckAtMs = now
                 _status.value = st                       // ⑤
+                // ⑦ الإيقاع بيد الخادم، والحدّان هنا فلا يُساء استعماله.
+                if (st.pollSeconds > 0) {
+                    pollIntervalMs = (st.pollSeconds * 1000L).coerceIn(MIN_POLL_MS, MAX_POLL_MS)
+                }
 
                 val key = KEY_REV + ":" + username
                 val known = prefs.getString(key, null)
@@ -107,6 +139,43 @@ class SubscriptionWatcher(
                 gate.unlock()
             }
         }
+    }
+
+    /**
+     * ⑥ يبدأ النبض ويبقى إلى أن يُلغى — يُربط بدورة حياة الشاشة في
+     * `MainActivity`، فينتهي حين يخرج التطبيق من المقدّمة.
+     *
+     * أوّل نبضة فوريّة: من فتح التطبيق للتوّ لا ينتظر دقيقتين ليرى ما
+     * اشتراه قبل قليل. وحارسُ الثلاثين ثانية في [check] يمنعها من أن
+     * تتضاعف مع فحص الإقلاع.
+     */
+    fun startBeating(
+        scope: CoroutineScope,
+        credentials: suspend () -> Pair<String, String>?,
+        onChanged: () -> Unit,
+    ) {
+        beat?.cancel()
+        beat = scope.launch {
+            while (isActive) {
+                val creds = credentials()
+                val u = creds?.first.orEmpty()
+                val p = creds?.second.orEmpty()
+                if (u.isNotBlank() && p.isNotBlank()) {
+                    check(u, p, force = false, onChanged = onChanged)
+                }
+                // ⚠ التأخير خارج الشرط عمداً. لو كان داخله لدارت الحلقة بلا
+                //   توقّف على شاشة الدخول — حيث لا حساب بعد — فأحرقت البطّارية
+                //   في لا شيء. من لا حساب له ينتظر مثل غيره، والحلقة تلتقطه
+                //   حين يسجّل دخوله.
+                delay(pollIntervalMs)
+            }
+        }
+    }
+
+    /** يوقف النبض — الخروج من المقدّمة، أو تسجيل خروج. */
+    fun stopBeating() {
+        beat?.cancel()
+        beat = null
     }
 
     /** يُنسي ما يخصّ حساباً — يُستدعى عند تسجيل الخروج فلا تبقى بصمة غريبة. */
@@ -131,5 +200,10 @@ class SubscriptionWatcher(
          *   في اليوم أرخص من صورة واحدة.
          */
         private const val MIN_INTERVAL_MS = 30 * 1000L
+
+        /** ⑦ ما يُستعمل قبل أوّل ردّ، وحدّاه. */
+        private const val DEFAULT_POLL_MS = 120 * 1000L
+        private const val MIN_POLL_MS = 60 * 1000L
+        private const val MAX_POLL_MS = 15 * 60 * 1000L
     }
 }
