@@ -48,6 +48,24 @@ val appModule = module {
     single { tv.own.owntv.features.setup.SubscriberLoginClient(get(), get()) }
     // مفرد: البصمة المحفوظة وقفل الفحص يجب أن يكونا واحداً لكلّ التطبيق.
     single { tv.own.owntv.features.setup.SubscriptionWatcher(androidContext(), get()) }
+
+    /* ══ الإعلانات ══
+       الترتيب هنا مقصود ومقيَّد: الكاش يسبق المستودع لأنّ المستودع يستدعيه عند
+       كلّ قبول سياسة، والبوّابة تسبقهما استعمالاً وتليهما إنشاءً.
+
+       و`compiledIn` يأتي من نكهة البناء لا من إعداد: على نسخة المتجر تُحذف
+       الميزة كلّها، لأنّ إعلاناً إجباريّاً ملء الشاشة عند انتقالٍ بدأه المستخدم
+       هو الشكل النموذجيّ لسياسة Disruptive Ads — وعقوبتها إيقاف التطبيق كلّه. */
+    single { tv.own.owntv.core.adverts.AdvertMediaCache(androidContext(), get()) }
+    single { tv.own.owntv.core.adverts.AdvertRepository(androidContext(), get()) }
+    single {
+        tv.own.owntv.core.adverts.AdvertGate(
+            repository = get(),
+            media = get(),
+            dao = get(),
+            compiledIn = tv.own.owntv.BuildConfig.SALAMTV_ADVERTS,
+        )
+    }
     viewModelOf(::SetupViewModel)
     // Takes a Context first; Koin resolves it from androidContext().
     viewModelOf(::LiveViewModel)

@@ -60,6 +60,9 @@ class ShellViewModel(
     private val weatherRepository: WeatherRepository,
     private val navVisibility: NavVisibility,
     private val subscriptionWatcher: tv.own.owntv.features.setup.SubscriptionWatcher,
+    private val subscriberLogin: tv.own.owntv.features.setup.SubscriberLoginClient,
+    private val advertRepository: tv.own.owntv.core.adverts.AdvertRepository,
+    private val advertGate: tv.own.owntv.core.adverts.AdvertGate,
 ) : ViewModel() {
 
     companion object {
@@ -147,6 +150,7 @@ class ShellViewModel(
      */
     fun startSubscriptionBeat() {
         if (!tv.own.owntv.BuildConfig.SALAMTV_LOCKED) return
+        watchAdvertRules()
         subscriptionWatcher.startBeating(
             scope = viewModelScope,
             credentials = { subscriberCredentials() },
@@ -156,6 +160,43 @@ class ShellViewModel(
 
     /** يوقف النبض — خروجٌ من المقدّمة. */
     fun stopSubscriptionBeat() = subscriptionWatcher.stopBeating()
+
+    /**
+     * يتابع بصمة الإعلانات على نبضة الاشتراك نفسها.
+     *
+     * ⚠ لا مؤقّت ثانٍ ولا طلب ثانٍ في كلّ دورة: `adv_rev` يصل داخل ردّ
+     *   `app_account.php` أصلاً، فلا يُطلب شيء إلّا حين تتبدّل البصمة فعلاً.
+     *   نبضةٌ خاصّة بالإعلانات كانت ستضاعف الطلبات وتستهلك بطّاريّة هاتفٍ في
+     *   جيب مقابل لا شيء.
+     *
+     * ولأنّ `rev` يتحرّك عند تغيّر الباقة وتواريخ الاشتراك — وهي مدخلات
+     * الإعفاء ونوع الحساب — يعيد [AdvertRepository.needsRefresh] الجلب عند
+     * تقادم السياسة أيضاً، لا عند تبدّل البصمة وحده.
+     */
+    private var advertWatchStarted = false
+
+    private fun watchAdvertRules() {
+        if (!tv.own.owntv.BuildConfig.SALAMTV_ADVERTS) return
+        // ⚠ يُستدعى من startSubscriptionBeat، وهي تُستدعى عند كلّ عودةٍ إلى
+        //   المقدّمة. بلا هذا الحارس يتراكم متلقٍّ جديد في كلّ مرّة على تدفّقٍ
+        //   لا ينتهي — تسرّبٌ يظهر بعد ساعات لا في أوّل تجربة.
+        if (advertWatchStarted) return
+        advertWatchStarted = true
+        viewModelScope.launch {
+            // ما بقي بلا نتيجة من تشغيلٍ سابق يُختم مرّةً هنا.
+            runCatching { advertGate.sealAbandoned() }
+
+            subscriptionWatcher.status.collect { st ->
+                val rev = st?.advRev ?: return@collect
+                if (!advertRepository.needsRefresh(rev)) return@collect
+                val (u, p) = subscriberCredentials() ?: return@collect
+                val raw = subscriberLogin.adverts(u, p)
+                if (advertRepository.accept(raw)) {
+                    Log.i(TAG, "advert rules refreshed (rev=$rev)")
+                }
+            }
+        }
+    }
 
     /** بيانات المشترك تُقرأ من المصدر نفسه — لا نحفظ نسخة ثانية منها. */
     private suspend fun subscriberCredentials(): Pair<String, String>? {

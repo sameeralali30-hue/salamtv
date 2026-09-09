@@ -103,6 +103,7 @@ class LiveViewModel(
     private val appContext: Context,
     private val channelDao: ChannelDao,
     private val categoryDao: CategoryDao,
+    private val advertGate: tv.own.owntv.core.adverts.AdvertGate,
     private val favoriteDao: FavoriteDao,
     private val historyDao: HistoryDao,
     private val profileDao: ProfileDao,
@@ -977,7 +978,8 @@ class LiveViewModel(
             // Cleared before handing over, so this tune's own [ensurePlaying] doesn't cancel the job
             // it is running inside.
             pendingZapTuneJob = null
-            ensurePlaying(channel)
+            // ① التنقّل بـCH± مرورٌ عابر لا اختيار: البوّابة لا تعمل عليه.
+            ensurePlaying(channel, tv.own.owntv.core.adverts.TuneReason.ZAP)
         }
     }
 
@@ -1163,13 +1165,16 @@ class LiveViewModel(
      *  full **mpv** player ONLY if ExoPlayer **errors** (a stream it can't open) — never just
      *  because it's still loading (clicking OK before the preview is ready used to drop to mpv and
      *  stick on a black screen for HLS). */
-    fun ensurePlaying(channel: ChannelEntity) {
+    fun ensurePlaying(
+        channel: ChannelEntity,
+        reason: tv.own.owntv.core.adverts.TuneReason = tv.own.owntv.core.adverts.TuneReason.DIRECT,
+    ) {
         zapList.cancelPendingRebuild()
         // A deliberate pick supersedes a CH+/- step still waiting out its delay — otherwise the deferred
         // tune would land half a second later and drag the user off the channel they just chose.
         pendingZapTuneJob?.cancel()
         pendingZapTuneJob = null
-        viewModelScope.launch { playChannel(channel) }
+        viewModelScope.launch { playChannel(channel, reason) }
     }
 
     private suspend fun getSource(sourceId: Long): tv.own.owntv.core.database.entity.SourceEntity? =
@@ -1202,7 +1207,10 @@ class LiveViewModel(
     /** Internal playback: the canonical ExoPlayer / mpv / Stalker / history side-effects for a
      *  channel. Direct-tune's background rebuild path calls this without cancelling the rebuild
      *  so the in-flight rebuild it owns isn't killed by its own play. */
-    private suspend fun playChannel(channel: ChannelEntity) {
+    private suspend fun playChannel(
+        channel: ChannelEntity,
+        reason: tv.own.owntv.core.adverts.TuneReason = tv.own.owntv.core.adverts.TuneReason.DIRECT,
+    ) {
         val pid = currentProfileId() ?: return
         if (!tv.own.owntv.core.content.AdultCategoryClassifier.allows(pid, channel.categoryId, profileDao, categoryDao)) return
         // Live TV set to play externally: hand the channel over instead of tuning an in-app engine.
@@ -1210,6 +1218,17 @@ class LiveViewModel(
         // #115 — a protected channel stays in-app whatever this setting says: no standard intent extra
         // carries a licence URL, so the external player would open it and fail immediately.
         if (externalPlayerOn.value && channel.drmConfig == null) { playExternal(channel); return }
+
+        /* ══ بوّابة الإعلان ══
+           موضعها هنا بالضبط: بعد فحص المحتوى (فلا يُعلَن على قناةٍ لن تُفتح)،
+           وبعد تحويلة المشغّل الخارجيّ (مشغّلٌ آخر لا يعرض إعلاننا)، وقبل أن
+           يُلمس أيّ محرّك بثّ.
+
+           ⚠ المرحلة الحاليّة **تُسجّل ولا تعرض**. الغرض أن نرى القرار في
+             السجلّ على أجهزةٍ حقيقيّة — أيّ قناة تُطابق، وأيّ سقفٍ يمنع، وهل
+             نزل الملفّ — قبل أن يرى مشتركٌ واحد إعلاناً. */
+        runCatching { advertDryRun(pid, channel, reason) }
+
         _previewChannel.value = channel
         clearTimeshift() // normal live = not timeshifted
         _catchupActive.value = false // tuning live ends any archive playback the HUD was showing
@@ -1255,6 +1274,35 @@ class LiveViewModel(
         armLadder(channel, preference)
         if (onMpv) startOnMpv(channel, reason) else startOnExo(channel)
         recordLiveHistory(channel)
+    }
+
+    /**
+     * يسأل البوّابة ويكتب جوابها في السجلّ، بلا أن يعرض شيئاً.
+     *
+     * معرّفا القناة والفئة المرسلان هما **معرّفا اللوحة** (`remoteId`) لا
+     * مفاتيح Room: الإعلان يُستهدف بما تعرفه اللوحة، والخلط بين المعرّفين
+     * يُنتج إعلاناً يُضبط على قناةٍ ويظهر على أخرى — عطلٌ لا يُكتشف إلّا من
+     * شكوى مشترك.
+     */
+    private suspend fun advertDryRun(
+        pid: Long,
+        channel: ChannelEntity,
+        reason: tv.own.owntv.core.adverts.TuneReason,
+    ) {
+        if (!tv.own.owntv.BuildConfig.SALAMTV_ADVERTS) return
+        val channelRemote = channel.remoteId.orEmpty()
+        val categoryRemote = channel.categoryId?.let { categoryDao.getById(it)?.remoteId }
+        val decision = advertGate.decide(pid, channelRemote, categoryRemote, reason)
+        if (decision != null) {
+            Log.i(
+                ADVERT_TAG,
+                "WOULD SHOW #${decision.spot.id} '${decision.spot.title}' " +
+                    "(${decision.spot.durationSecs}s, skip=${decision.spot.skipAfterSecs}) " +
+                    "before '${channel.name}' [remote=$channelRemote cat=$categoryRemote reason=$reason]",
+            )
+        } else {
+            Log.d(ADVERT_TAG, "no advert for '${channel.name}' [remote=$channelRemote cat=$categoryRemote reason=$reason]")
+        }
     }
 
     /** Live engine routing decisions go to Logcat (unconditionally, so a release build can be diagnosed
@@ -2238,6 +2286,9 @@ class LiveViewModel(
 
     private companion object {
         const val ENGINE_TAG = "LiveEngine"
+
+        /** وسمٌ واحد لكلّ ما يخصّ الإعلانات — `adb logcat -s SalamTVAds` يكفي للتشخيص. */
+        const val ADVERT_TAG = "SalamTVAds"
 
         /** How long a channel must stay tuned before it counts as watched — see [recordLiveHistory]. */
         const val HISTORY_DEBOUNCE_MS = 5_000L

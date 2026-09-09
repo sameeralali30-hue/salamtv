@@ -267,6 +267,14 @@ class SubscriberLoginClient(
          * يُحدَّث أبداً.
          */
         val pollSeconds: Int,
+        /**
+         * بصمة قواعد الإعلانات — **أختٌ** لـ[rev] لا جزءٌ منها.
+         *
+         * ⚠ دمجها في [rev] كان سيجعل تعديل ثواني التخطّي في إعلانٍ واحد يُطلق
+         *   إعادة بناء الكتالوج كلّه (مئتا قناة) على كلّ جهازٍ في الميدان —
+         *   كلفةٌ لا علاقة لها بالسبب.
+         */
+        val advRev: String,
     )
 
     suspend fun account(username: String, password: String): Status? = withContext(Dispatchers.IO) {
@@ -299,10 +307,88 @@ class SubscriberLoginClient(
                     subStart = j.optLong("sub_start").takeIf { it > 0 },
                     subEnd = j.optLong("sub_end").takeIf { it > 0 },
                     pollSeconds = j.optInt("poll", 0),
+                    advRev = j.optString("adv_rev"),
                 )
             }
         }.getOrElse {
             Log.w(TAG, "account check failed: ${it.javaClass.simpleName}")
+            null
+        }
+    }
+
+    /**
+     * قواعد الإعلانات، نصّاً خاماً كما وصلت.
+     *
+     * لا تُحلَّل هنا عمداً: [tv.own.owntv.core.adverts.AdvertRepository] هي التي
+     * تحلّل وتحفظ، فالنصّ نفسه هو ما يُكتب على القرص — فلا يوجد تمثيلان
+     * للسياسة الواحدة يمكن أن يفترقا.
+     *
+     * يعيد null عند أيّ تعذّر، والمتّصل يفرّق بين «لا إعلانات» و«لا أدري».
+     */
+    suspend fun adverts(username: String, password: String): String? = withContext(Dispatchers.IO) {
+        val payload = JSONObject()
+            .put("username", username)
+            .put("password", password)
+            .toString()
+            .toRequestBody(JSON)
+
+        val url = BuildConfig.SALAMTV_LOGIN_URL.substringBeforeLast('/') + "/app-adverts"
+        val request = Request.Builder()
+            .url(url)
+            .header("Accept", "application/json")
+            .post(payload)
+            .build()
+
+        return@withContext runCatching {
+            client.newCall(request).execute().use { resp ->
+                val body = resp.body.string()
+                if (!resp.isSuccessful) return@use null
+                body.takeIf { JSONObject(it).optBoolean("ok") }
+            }
+        }.getOrElse {
+            Log.w(TAG, "advert rules fetch failed: ${it.javaClass.simpleName}")
+            null
+        }
+    }
+
+    /**
+     * يرفع دفعة الانطباعات والدقائق المستهلكة، ويعيد الرصيد المعتمَد من الخادم
+     * (‎-1‎ لمشتركٍ مدفوع)، أو null إن لم يصل الردّ.
+     *
+     * الدفعة قابلةٌ لإعادة الإرسال بلا ضرر: مفتاح التفرّد على الخادم يبتلع
+     * المكرّر، فلا حاجة إلى بروتوكول إيصالات.
+     */
+    suspend fun reportAdverts(
+        username: String,
+        password: String,
+        events: org.json.JSONArray,
+        consumedMinutes: Int,
+    ): Int? = withContext(Dispatchers.IO) {
+        val installId = runCatching { clientId.get() }.getOrDefault("")
+        val payload = JSONObject()
+            .put("username", username)
+            .put("password", password)
+            .put("device_id", installId)
+            .put("consumed_minutes", consumedMinutes)
+            .put("events", events)
+            .toString()
+            .toRequestBody(JSON)
+
+        val url = BuildConfig.SALAMTV_LOGIN_URL.substringBeforeLast('/') + "/app-adverts-report"
+        val request = Request.Builder()
+            .url(url)
+            .header("Accept", "application/json")
+            .post(payload)
+            .build()
+
+        return@withContext runCatching {
+            client.newCall(request).execute().use { resp ->
+                val j = JSONObject(resp.body.string())
+                if (!j.optBoolean("ok")) return@use null
+                j.optInt("balance_minutes", -1)
+            }
+        }.getOrElse {
+            Log.w(TAG, "advert report failed: ${it.javaClass.simpleName}")
             null
         }
     }

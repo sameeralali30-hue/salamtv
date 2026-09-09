@@ -170,10 +170,20 @@ android {
         create("site") {
             dimension = "dist"
             buildConfigField("boolean", "SALAMTV_SELF_UPDATE", "true")
+            buildConfigField("boolean", "SALAMTV_ADVERTS", "true")
         }
         create("play") {
             dimension = "dist"
             buildConfigField("boolean", "SALAMTV_SELF_UPDATE", "false")
+            // ⚠ الإعلانات محذوفة من بناء المتجر عمداً، لا موقوفة بمفتاح.
+            //
+            //    إعلانٌ إجباريّ ملء الشاشة عند انتقالٍ بدأه المستخدم هو الشكل
+            //    النموذجيّ لسياسة Disruptive Ads لدى جوجل، وعقوبتها إيقاف
+            //    التطبيق كلّه — بمن فيهم من لم يرَ إعلاناً قطّ. و R8 يُسقط
+            //    الفرع الميّت، فلا يبقى في نسخة المتجر أثرٌ للميزة أصلاً.
+            //
+            //    وأجهزة الميدان كلّها على نكهة الموقع، فلا خسارة.
+            buildConfigField("boolean", "SALAMTV_ADVERTS", "false")
         }
     }
 

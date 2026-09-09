@@ -54,11 +54,9 @@
 1	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	–
 1	app/src/main/java/tv/own/owntv/features/setup/RedeemDialog.kt	\0
 1	app/src/main/java/tv/own/owntv/features/setup/SetupViewModel.kt	\0
-7	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	\0
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	/app_account.php
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	/app_redeem.php
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	/app_register.php
-1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	device_id
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	offline
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	redeem ok
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	redeem refused
