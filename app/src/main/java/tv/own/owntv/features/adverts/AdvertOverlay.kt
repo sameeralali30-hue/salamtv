@@ -130,11 +130,30 @@ fun AdvertOverlay(
     var done by remember(decision.eventUid) { mutableStateOf(false) }
     val startedAt = remember(decision.eventUid) { System.currentTimeMillis() }
 
+    /* ═══ لماذا يُحرَّر المشغّل من هنا لا من onDispose وحده ═══
+
+       كان التحرير معلّقاً بـ`onDispose` في [AdvertVideo]، أي أنّه لا يقع حتى
+       تُزيل Compose الطبقةَ في إعادة تركيبٍ لاحقة. وبين انتهاء الإعلان وتلك
+       اللحظة يكون النموذج قد استأنف ضبطَ القناة سلفاً.
+
+       ⚠ فينفتح مُفكِّكا ترميزٍ معاً للحظة. وعلى جهازٍ لا يملك إلا واحداً —
+         المحاكي، والصناديق الرخيصة التي كُتب من أجلها هذا كلّه — يفشل الثاني
+         في الفتح، فلا تأتي صورةُ القناة أبداً. قِسته: بعد كلّ إعلانٍ يكتمل
+         تعطب أوّل محاولةِ فتح: «no picture within 30s of tuning»، ثمّ تنجح
+         إعادةُ المحاولة لأنّ الطبقة تكون قد زالت وحُرِّر المشغّل.
+
+       فالتحرير يسبق التبليغ. و`release()` يحجز الخيط حتى يفرغ الخيط الداخليّ،
+       فحين تعود `onFinished` يكون المُفكِّك متاحاً فعلاً لا وعداً. */
+    val releasePlayer = remember(decision.eventUid) {
+        java.util.concurrent.atomic.AtomicReference<(() -> Unit)?>(null)
+    }
+
     /** يضمن أنّ [onFinished] لا تُنادى مرّتين مهما تسابقت المسارات. */
     val finish: (AdvertOutcome) -> Unit = { outcome ->
         if (!done) {
             done = true
             Log.i(TAG, "advert #${spot.id} finishing: $outcome at ${elapsed}s")
+            runCatching { releasePlayer.getAndSet(null)?.invoke() }
             onFinished(outcome, elapsed * 1000L)
         }
     }
@@ -152,9 +171,21 @@ fun AdvertOverlay(
         }
     }
 
-    // ⑥ الإيقاف القسريّ — من ساعة الجدار، فيشمل زمن الاستعداد ولا يتجمّد معه.
-    LaunchedEffect(decision.eventUid) {
-        delay(READY_TIMEOUT_MS + (spot.durationSecs + HARD_STOP_GRACE_SECS) * 1000L)
+    /* ⑥ الإيقاف القسريّ — يُقاس من **ظهور الصورة** لا من ظهور الطبقة.
+
+       ⚠ كان يُقاس من ظهور الطبقة ويضيف READY_TIMEOUT_MS كاملاً إلى الميزانيّة،
+         أي أنّ إعلاناً مدّته عشر ثوانٍ يبقى ٨+١٠+٥ = ٢٣ ثانية مهما استعدّ
+         المشغّل بسرعة. قِسته: استعدّ في ٣٤٦٠ م.ث وانتهى عند ٢٣ ثانية — فأكثر
+         من أربع ثوانٍ ضاعت لأنّ الميزانيّة حجزت زمن استعدادٍ لم يُستهلك.
+
+         والفارق ليس تجميليّاً: من يبيع «إعلان ثلاثين ثانية» يعرضه ثلاثاً
+         وأربعين، ومن يُحسب عليه الانتظار هو المشاهد.
+
+       والحارس ⑤ يبقى مستقلّاً: ما لم تظهر صورةٌ أصلاً تُفتح القناة بـERROR. */
+    LaunchedEffect(decision.eventUid, ready) {
+        if (!ready) return@LaunchedEffect
+        delay((spot.durationSecs + HARD_STOP_GRACE_SECS) * 1000L)
+        Log.w(TAG, "advert #${spot.id} hard stop after ${spot.durationSecs + HARD_STOP_GRACE_SECS}s")
         finish(AdvertOutcome.COMPLETED)
     }
 
@@ -261,6 +292,7 @@ fun AdvertOverlay(
                 },
                 onEnded = { finish(AdvertOutcome.COMPLETED) },
                 onError = { finish(AdvertOutcome.ERROR) },
+                registerReleaser = { releasePlayer.set(it) },
             )
         }
 
@@ -340,6 +372,8 @@ private fun AdvertVideo(
     onReady: () -> Unit,
     onEnded: () -> Unit,
     onError: () -> Unit,
+    /** يُسلّم المُناديَ وسيلةَ تحريرٍ مبكّر — انظر التعليق عند `releasePlayer`. */
+    registerReleaser: (() -> Unit) -> Unit = {},
 ) {
     val context = LocalContext.current
     val player = remember(path) { ExoPlayer.Builder(context).build() }
@@ -366,10 +400,17 @@ private fun AdvertVideo(
         player.playWhenReady = true
         player.prepare()
 
-        onDispose {
-            player.removeListener(listener)
-            player.release()
+        // مرّةً واحدة لا مرّتين: التحرير المبكّر أو onDispose، أيّهما سبق.
+        val released = java.util.concurrent.atomic.AtomicBoolean(false)
+        val releaseOnce = {
+            if (released.compareAndSet(false, true)) {
+                player.removeListener(listener)
+                player.release()
+            }
         }
+        registerReleaser(releaseOnce)
+
+        onDispose { releaseOnce() }
     }
 
     androidx.compose.ui.viewinterop.AndroidView(

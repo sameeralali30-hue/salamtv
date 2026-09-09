@@ -43,6 +43,7 @@
 3	empty	app/src/main/java/tv/own/owntv/core/i18n/LocalizedContent.kt	\0
 1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	SalamTVAds
 1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert #${spot.id} finishing: $outcome at ${elapsed}s
+1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert #${spot.id} hard stop after ${spot.durationSecs + HARD_STOP_GRACE_SECS}s
 1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert #${spot.id} not ready within ${READY_TIMEOUT_MS}ms — opening the channel
 1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert #${spot.id} ready in ${System.currentTimeMillis() - startedAt}ms
 1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert focus attempt ${attempt + 1} failed: ${it.javaClass.simpleName}
@@ -1160,6 +1161,7 @@
 1	uri	app/src/main/java/tv/own/owntv/ui/components/TrailerPlayerScreen.kt	https://www.youtube.com/watch?v=$videoKey
 1	uri	app/src/main/java/tv/own/owntv/ui/components/TrailerPlayerScreen.kt	vnd.youtube:$videoKey
 1	log	app/src/main/java/tv/own/owntv/ui/components/TvImeMetrics.kt	frame=$rect imeBottom=$imeBottom
+1	preference-key	app/src/main/java/tv/own/owntv/ui/components/TvImeMetrics.kt	insets_reliable
 1	technical	app/src/main/java/tv/own/owntv/ui/format/TimeFormat.kt	Hm
 1	technical	app/src/main/java/tv/own/owntv/ui/format/TimeFormat.kt	hm
 1	technical	app/src/main/java/tv/own/owntv/ui/theme/Glass.kt	chromeCondense

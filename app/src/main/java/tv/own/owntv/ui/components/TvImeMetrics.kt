@@ -34,6 +34,14 @@ internal object TvImeDefaults {
     const val FALLBACK_KEYBOARD_FRACTION = 0.45f
     const val POLL_INTERVAL_MS = 100L
     const val POLL_DURATION_MS = 2_000L
+
+    /**
+     * كم ننتظر ظهور اللوحة فعليّاً قبل أن نصدّق أنّها لن تظهر.
+     *
+     * قِسته على الجهاز: بين طلب الفتح ووصول أوّل inset حقيقيّ نحو ١٫٩ ثانية.
+     * فثلاثٌ تكفي بهامش، ولا تطول حتى تُرى.
+     */
+    const val SHOW_GRACE_MS = 3_000L
     const val TAG = "OwnTV-IME"
 }
 
@@ -51,6 +59,23 @@ internal class TvImeWatcher(private val hostView: View) {
     private val rect = Rect()
     private var baselineVisibleBottom = -1
     private var attached = false
+
+    /* ═══ لماذا نتتبّع «هل insets هذا الجهاز صادقة» ═══
+       التقدير (ESTIMATE) موجودٌ لأجل تلفازات لا تنشر inset ولا تُغيّر الإطار
+       المرئيّ، فلا سبيل لمعرفة ارتفاع اللوحة إلا تقديره ما دام الحقل طالبها.
+
+       ⚠ وعلى الهاتف انقلب هذا العلاج مرضاً: إن أُغلقت اللوحة من النظام —
+         زرّ الرجوع أو سهم الإخفاء — فالحقل لا يعلم، فيبقى imeRequested
+         مرفوعاً، فيبقى التقدير قائماً، **فتبقى النافذة محشورة في شريطٍ
+         أعلى الشاشة إلى الأبد** وزرّ «إنشاء» تحت القصّ. رأيتُه على المحاكي:
+         mInputShown=false و imeBottom=0 بينما الراصد يقول visible=true.
+
+       فالقاعدة: جهازٌ أثبت مرّةً أنّه ينشر inset حقيقيّاً يُصدَّق بعدها،
+       ولا يُبنى على التقدير في وجه شهادته. والتلفاز الذي لم ينشر شيئاً قطّ
+       يبقى على سلوكه القديم بلا تغيير. */
+    private var insetsReliable = prefs.getBoolean(KEY_INSETS_RELIABLE, false)
+    private var imeConfirmedVisible = false
+    private var requestedAtMs = 0L
     private val globalLayoutListener = ViewTreeObserver.OnGlobalLayoutListener { recompute("layout") }
 
     fun attach() {
@@ -80,12 +105,15 @@ internal class TvImeWatcher(private val hostView: View) {
     fun onImeRequested() {
         // Capture the unobstructed frame synchronously before keyboard.show() can alter it.
         captureBaseline()
+        imeConfirmedVisible = false
+        requestedAtMs = android.os.SystemClock.elapsedRealtime()
         imeRequested = true
         recompute("requested")
     }
 
     fun onImeDismissed() {
         imeRequested = false
+        imeConfirmedVisible = false
         recompute("dismissed")
         // Let the TV IME finish its hide animation before refreshing the unobstructed baseline.
         hostView.postDelayed({ captureBaseline(); recompute("hidden") }, 350L)
@@ -126,6 +154,24 @@ internal class TvImeWatcher(private val hostView: View) {
         if (measured != null) {
             prefs.edit().putInt(KEY_CALIBRATED_HEIGHT, measured.first).apply()
         }
+        if (measured?.second == TvImeMetrics.Source.IME_INSET) {
+            imeConfirmedVisible = true
+            if (!insetsReliable) {
+                insetsReliable = true
+                prefs.edit().putBoolean(KEY_INSETS_RELIABLE, true).apply()
+            }
+        }
+
+        /* اللوحة أُغلقت من النظام والحقل لا يعلم: نُنزل الراية بأنفسنا.
+           - إن كانت اللوحة قد ظهرت فعلاً ثمّ اختفت، فالحكم فوريّ.
+           - وإن لم تظهر بعد، نمهلها SHOW_GRACE_MS حتى لا نحكم أثناء فتحها. */
+        if (imeRequested && insetsReliable && !imeInsetVisible && measured == null) {
+            val elapsed = android.os.SystemClock.elapsedRealtime() - requestedAtMs
+            if (imeConfirmedVisible || elapsed > TvImeDefaults.SHOW_GRACE_MS) {
+                imeRequested = false
+                imeConfirmedVisible = false
+            }
+        }
 
         val obstruction = measured?.first ?: if (imeRequested) {
             prefs.getInt(KEY_CALIBRATED_HEIGHT, 0).takeIf { it >= minKeyboard }
@@ -154,6 +200,7 @@ internal class TvImeWatcher(private val hostView: View) {
 
     private companion object {
         const val KEY_CALIBRATED_HEIGHT = "keyboard_height_px"
+        const val KEY_INSETS_RELIABLE = "insets_reliable"
     }
 }
 
