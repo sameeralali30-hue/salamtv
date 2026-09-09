@@ -58,6 +58,7 @@ val appModule = module {
        هو الشكل النموذجيّ لسياسة Disruptive Ads — وعقوبتها إيقاف التطبيق كلّه. */
     single { tv.own.owntv.core.adverts.AdvertMediaCache(androidContext(), get()) }
     single { tv.own.owntv.core.adverts.AdvertRepository(androidContext(), get()) }
+    single { tv.own.owntv.features.adverts.AdvertReporter(get(), get()) }
     single {
         tv.own.owntv.core.adverts.AdvertGate(
             repository = get(),

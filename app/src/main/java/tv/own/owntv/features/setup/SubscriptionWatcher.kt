@@ -76,6 +76,19 @@ class SubscriptionWatcher(
     /** آخر حالة معروفة، أو null قبل أوّل فحص ناجح. */
     val status: StateFlow<SubscriberLoginClient.Status?> = _status.asStateFlow()
 
+    private val _checks = MutableStateFlow(0L)
+
+    /**
+     * عدّاد يزداد بعد **كلّ** فحصٍ ناجح، تغيّرت الحالة أو لم تتغيّر.
+     *
+     * ⚠ [status] لا يصلح لمن يريد «وقع فحصٌ الآن». هو `StateFlow`، ولا يُشعر
+     *   متلقّيه إلّا حين تختلف القيمة عن سابقتها — وحين لا يتغيّر شيء في
+     *   الاشتراك تكون الحالة مطابقة تماماً فلا يصل شيء. من علّق عملاً دوريّاً
+     *   عليه (تصريف تقارير مثلاً) وجده يعمل مرّةً عند الدخول ثمّ يصمت أبداً،
+     *   والنبض يعمل طوال الوقت. القيمة هنا لا تتكرّر، فالإشعار مضمون.
+     */
+    val checks: StateFlow<Long> = _checks.asStateFlow()
+
     private var lastCheckAtMs = 0L
 
     /**
@@ -117,6 +130,7 @@ class SubscriptionWatcher(
                 }
                 lastCheckAtMs = now
                 _status.value = st                       // ⑤
+                _checks.value = _checks.value + 1
                 // ⑦ الإيقاع بيد الخادم، والحدّان هنا فلا يُساء استعماله.
                 if (st.pollSeconds > 0) {
                     pollIntervalMs = (st.pollSeconds * 1000L).coerceIn(MIN_POLL_MS, MAX_POLL_MS)

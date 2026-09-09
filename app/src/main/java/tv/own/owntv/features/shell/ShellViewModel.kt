@@ -63,6 +63,7 @@ class ShellViewModel(
     private val subscriberLogin: tv.own.owntv.features.setup.SubscriberLoginClient,
     private val advertRepository: tv.own.owntv.core.adverts.AdvertRepository,
     private val advertGate: tv.own.owntv.core.adverts.AdvertGate,
+    private val advertReporter: tv.own.owntv.features.adverts.AdvertReporter,
 ) : ViewModel() {
 
     companion object {
@@ -186,14 +187,28 @@ class ShellViewModel(
             // ما بقي بلا نتيجة من تشغيلٍ سابق يُختم مرّةً هنا.
             runCatching { advertGate.sealAbandoned() }
 
-            subscriptionWatcher.status.collect { st ->
-                val rev = st?.advRev ?: return@collect
-                if (!advertRepository.needsRefresh(rev)) return@collect
+            /* ⚠ العدّاد لا الحالة.
+                 `status` تدفّقُ حالةٍ لا يُشعر إلّا عند الاختلاف، وحين لا
+                 يتغيّر شيء في الاشتراك — وهو الغالب الأعمّ — لا يصل شيء.
+                 عُلّق التصريف عليه أوّل مرّة فعمل مرّةً عند الدخول ثمّ صمت،
+                 والنبض يعمل كلّ دقيقتين. `checks` قيمةٌ لا تتكرّر. */
+            subscriptionWatcher.checks.collect {
                 val (u, p) = subscriberCredentials() ?: return@collect
-                val raw = subscriberLogin.adverts(u, p)
-                if (advertRepository.accept(raw)) {
-                    Log.i(TAG, "advert rules refreshed (rev=$rev)")
+
+                val rev = subscriptionWatcher.status.value?.advRev
+                if (advertRepository.needsRefresh(rev)) {
+                    val raw = subscriberLogin.adverts(u, p)
+                    if (advertRepository.accept(raw)) {
+                        Log.i(TAG, "advert rules refreshed (rev=$rev)")
+                    }
                 }
+
+                /* التقارير تركب النبضة نفسها ولا تُنشئ طلباً دوريّاً ثانياً.
+                   وتُصرَّف في كلّ نبضة لا عند تغيّر البصمة فقط: ما عُرض أمس
+                   يجب أن يصل اليوم حتّى لو لم يتغيّر إعلانٌ واحد. */
+                runCatching {
+                    advertReporter.drain(u, p, advertRepository.policy.value.reportMaxBatch)
+                }.onFailure { Log.w(TAG, "advert report drain failed: ${it.javaClass.simpleName}") }
             }
         }
     }

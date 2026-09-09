@@ -49,6 +49,18 @@
 1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert overlay holds focus
 1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert overlay never took focus — keys are not trapped
 2	protocol	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	image
+1	empty	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	\0
+1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	SalamTVAds
+1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	advert report not delivered; ${rows.size} row(s) stay queued
+1	json	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	at
+1	json	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	channel_id
+1	json	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	granted_minutes
+1	json	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	outcome
+1	json	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	placement
+1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	reported ${rows.size} advert impression(s)
+1	json	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	spot_id
+1	json	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	uid
+1	json	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	watched_ms
 2	empty	app/src/main/java/tv/own/owntv/features/customize/BulkRenameDialogs.kt	\0
 1	assertion	app/src/main/java/tv/own/owntv/features/customize/CustomizeItemsViewModel.kt	EPISODE not applicable
 2	assertion	app/src/main/java/tv/own/owntv/features/customize/CustomizeItemsViewModel.kt	EPISODE not applicable to category items
@@ -556,6 +568,7 @@
 5	empty	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	\0
 1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	OwnTVHome
 1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	activeProfileChanged profile=$pid androidTvHomeEnabled=${settings.androidTvHomeEnabled.first()}
+1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	advert report drain failed: ${it.javaClass.simpleName}
 1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	advert rules refreshed (rev=$rev)
 2	technical	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	auto_refresh
 1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	checkAutoRefresh epg sourceId=${src.id} mode=$mode — enqueuing
