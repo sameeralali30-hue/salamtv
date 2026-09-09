@@ -192,11 +192,20 @@ class SubscriberLoginClient(
      *
      * @return رسالة اللوحة عند النجاح؛ ونصّها هو ما يُعرض كما هو عند الرفض.
      */
+    /**
+     * نتيجة إنشاء حساب.
+     *
+     * [selfServe] = اللوحة فتحت باقةً للتسجيل الذاتيّ، فالحساب **يعمل الآن**
+     * ولا رمز يُطلب. وهذا ما يجعل «حمّل التطبيق وشاهد» مساراً حقيقيّاً بدل
+     * حسابٍ معلّق ينتظر رمزاً لن يجده صاحبه.
+     */
+    data class RegisterOutcome(val message: String, val selfServe: Boolean)
+
     suspend fun register(
         username: String,
         password: String,
         code: String,
-    ): Result<String> = withContext(Dispatchers.IO) {
+    ): Result<RegisterOutcome> = withContext(Dispatchers.IO) {
         val payload = JSONObject()
             .put("username", username)
             .put("password", password)
@@ -223,8 +232,9 @@ class SubscriberLoginClient(
         }
         val msg = json.optString("message")
         if (json.optBoolean("ok")) {
-            Log.i(TAG, "register ok (redeemed=${json.optBoolean("redeemed")})")
-            Result.success(msg)
+            val selfServe = json.optBoolean("self_serve")
+            Log.i(TAG, "register ok (redeemed=${json.optBoolean("redeemed")} selfServe=$selfServe)")
+            Result.success(RegisterOutcome(msg, selfServe))
         } else {
             Log.w(TAG, "register refused")
             Result.failure(LoginException("refused", msg))

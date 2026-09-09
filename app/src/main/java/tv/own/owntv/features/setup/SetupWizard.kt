@@ -300,11 +300,27 @@ fun Onboarding(
                 succeeded = registerUi.ok,
                 offline = registerUi.offline,
                 onSubmit = { u, p ->
-                    vm.register(u, p) { user, pass ->
-                        newAccount = user to pass
+                    vm.register(u, p) { user, pass, selfServe ->
                         showRegister = false
                         vm.clearRegister()
-                        showRedeem = true
+                        if (selfServe) {
+                            /* باقةٌ مفتوحة للتسجيل الذاتيّ: الحساب يعمل الآن.
+                               ⚠ طلبُ رمزٍ هنا كان سيكون طلباً لشيءٍ لا وجود له
+                                 — لا الموزّع أعطاه رمزاً ولا نحن. فيدخل مباشرة. */
+                            newAccount = null
+                            vm.signIn(user, pass) {
+                                step = if (signInProfileId != null) {
+                                    vm.useProfile(signInProfileId)
+                                    vm.finishSignIn { importOrigin = Step.SIGN_IN }
+                                    Step.IMPORTING
+                                } else {
+                                    Step.CREATE_PROFILE
+                                }
+                            }
+                        } else {
+                            newAccount = user to pass
+                            showRedeem = true
+                        }
                     }
                 },
                 onHaveAccount = { showRegister = false; vm.clearRegister() },

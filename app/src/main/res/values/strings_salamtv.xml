@@ -64,4 +64,9 @@
     <string name="salamtv_advert_skip">Skip advert</string>
     <string name="salamtv_advert_hold_back">Hold Back to cancel</string>
     <string name="salamtv_preview_blocked_advert">Advert first</string>
+    <!-- ══ الباقة المجّانيّة ══ -->
+    <string name="salamtv_out_of_time_title">That is your free viewing for today</string>
+    <string name="salamtv_out_of_time_body">You have used your free viewing time for today. It comes back tomorrow — or upgrade your plan for unlimited viewing with no adverts.</string>
+    <string name="salamtv_out_of_time_ok">Got it</string>
+    <string name="salamtv_minutes_left">%1$d min left today</string>
 </resources>

@@ -168,15 +168,15 @@ class SetupViewModel(
     fun register(
         username: String,
         password: String,
-        onCreated: (username: String, password: String) -> Unit,
+        onCreated: (username: String, password: String, selfServe: Boolean) -> Unit,
     ) {
         if (_registerUi.value.busy) return
         _registerUi.value = RegisterUi(busy = true)
         viewModelScope.launch {
             subscriberLogin.register(username, password, "")
-                .onSuccess { msg ->
-                    _registerUi.value = RegisterUi(message = msg, ok = true)
-                    onCreated(username, password)
+                .onSuccess { outcome ->
+                    _registerUi.value = RegisterUi(message = outcome.message, ok = true)
+                    onCreated(username, password, outcome.selfServe)
                 }
                 .onFailure { e ->
                     val ex = e as? SubscriberLoginClient.LoginException

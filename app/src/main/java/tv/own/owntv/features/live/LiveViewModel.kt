@@ -16,6 +16,7 @@ import androidx.paging.cachedIn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -103,7 +104,7 @@ class LiveViewModel(
     private val appContext: Context,
     private val channelDao: ChannelDao,
     private val categoryDao: CategoryDao,
-    private val advertGate: tv.own.owntv.core.adverts.AdvertGate,
+    private val adverts: tv.own.owntv.core.adverts.Adverts,
     private val favoriteDao: FavoriteDao,
     private val historyDao: HistoryDao,
     private val profileDao: ProfileDao,
@@ -598,6 +599,9 @@ class LiveViewModel(
     }
 
     init {
+        // المجّانيّ وحده يُعدّ له؛ الدالّة نفسها تخرج فوراً لغيره.
+        startEntitlementMeter()
+        viewModelScope.launch { runCatching { adverts.ledger.prune() } }
         // Persist the selected category (debounced — the rail fires select() on focus as you scroll).
         viewModelScope.launch {
             _selected.drop(1).debounce(800).distinctUntilChanged().collect { settings.setLastLiveCategory(it.serialize()) }
@@ -705,6 +709,22 @@ class LiveViewModel(
      */
     private var advertOutcome: kotlinx.coroutines.CompletableDeferred<Pair<tv.own.owntv.core.adverts.AdvertOutcome, Long>>? = null
 
+    private val _outOfTime = MutableStateFlow(false)
+
+    /**
+     * نفد رصيد المشترك المجّانيّ ولا إعلان متاح يشتري له المزيد.
+     *
+     * ⚠ حالةٌ منفصلة عن الإعلان عمداً: الإعلان يُعرض ويمضي، وهذه تبقى حتّى
+     *   يقرّ بها المستخدم. خلطهما كان سيجعل نفاد الوقت يختفي من نفسه بعد
+     *   ثوانٍ، فلا يفهم أحدٌ لماذا توقّفت الصورة.
+     */
+    val outOfTime: StateFlow<Boolean> = _outOfTime.asStateFlow()
+
+    /** الدقائق المتاحة للمجّانيّ — تعرضها الشاشة. */
+    val advertBalance = adverts.ledger.balance
+
+    fun dismissOutOfTime() { _outOfTime.value = false }
+
     /**
      * تُنادى من الطبقة حين ينتهي العرض بأيّ سبب — اكتمالاً أو تخطّياً أو
      * إلغاءً أو عطلاً.
@@ -738,7 +758,7 @@ class LiveViewModel(
         if (tv.own.owntv.BuildConfig.SALAMTV_ADVERTS) {
             viewModelScope.launch {
                 val pid = currentProfileId()
-                val blocked = pid != null && advertGate.wouldFire(
+                val blocked = pid != null && adverts.gate.wouldFire(
                     pid,
                     channel.remoteId.orEmpty(),
                     channel.categoryId?.let { categoryDao.getById(it)?.remoteId },
@@ -1358,7 +1378,7 @@ class LiveViewModel(
         val categoryRemote = channel.categoryId?.let { categoryDao.getById(it)?.remoteId }
 
         val decision = runCatching {
-            advertGate.decide(pid, channelRemote, categoryRemote, reason, channelName = channel.name)
+            adverts.gate.decide(pid, channelRemote, categoryRemote, reason, channelName = channel.name)
         }.getOrNull()
 
         if (decision == null) {
@@ -1373,16 +1393,38 @@ class LiveViewModel(
                [startOnExo] من «الترقية بإلغاء الكتم» بعد الإعلان: لولاه لوجد
                الرابط مطابقاً فرفع الكتم عن محرّكٍ متوقّف — صورةٌ لا تأتي أبداً.
                و`stalkerPreviewCmd` حقلٌ هنا لا في المحرّك، فيُصفَّر يدويّاً. */
+        val outcome = showAdvert(decision, pid)
+
+        /* الإلغاء لا يفتح القناة — وهذا ما يجعل مخرج الطوارئ غير تحايل:
+           لا يربح المستخدم منه شيئاً سوى الخروج ممّا دخله. */
+        return outcome != tv.own.owntv.core.adverts.AdvertOutcome.ABORTED
+    }
+
+    /**
+     * يوقف المحرّكين، يعرض الإعلان، وينتظر انتهاءه — ويمنح الرصيد إن اكتمل.
+     *
+     * ⚠ إيقاف المحرّكين قبل الإعلان لسببين لا واحد:
+     *   • فكُّ ترميزٍ واحد حيّ في كلّ لحظة. صندوقٌ رخيص يحمل مُفكَّيْ ترميز
+     *     معاً قد يفشل في فتح أحدهما.
+     *   • [LivePreviewEngine.stop] يصفّر `currentUrl`، وهذا ما يمنع
+     *     [startOnExo] من «الترقية بإلغاء الكتم» بعد الإعلان: لولاه لوجد
+     *     الرابط مطابقاً فرفع الكتم عن محرّكٍ متوقّف — صورةٌ لا تأتي أبداً.
+     *     و`stalkerPreviewCmd` حقلٌ هنا لا في المحرّك، فيُصفَّر يدويّاً.
+     */
+    private suspend fun showAdvert(
+        decision: tv.own.owntv.core.adverts.AdvertDecision,
+        pid: Long,
+    ): tv.own.owntv.core.adverts.AdvertOutcome {
         previewEngine.stop()
         stalkerPreviewCmd = null
         setStalkerReconnect(null)
         player.stop()
 
-        advertGate.begin(decision, pid)
+        adverts.gate.begin(decision, pid)
         val waiter = kotlinx.coroutines.CompletableDeferred<Pair<tv.own.owntv.core.adverts.AdvertOutcome, Long>>()
         advertOutcome = waiter
         _advert.value = decision
-        Log.i(ADVERT_TAG, "showing advert #${decision.spot.id} before '${channel.name}'")
+        Log.i(ADVERT_TAG, "showing advert #${decision.spot.id} (${decision.placement})")
 
         val (outcome, watchedMs) = try {
             waiter.await()
@@ -1394,12 +1436,89 @@ class LiveViewModel(
             advertOutcome = null
         }
 
-        runCatching { advertGate.finish(decision.eventUid, outcome, watchedMs) }
-        Log.i(ADVERT_TAG, "advert #${decision.spot.id} ended: $outcome after ${watchedMs}ms")
+        runCatching { adverts.gate.finish(decision.eventUid, outcome, watchedMs) }
 
-        /* الإلغاء لا يفتح القناة — وهذا ما يجعل مخرج الطوارئ غير تحايل:
-           لا يربح المستخدم منه شيئاً سوى الخروج ممّا دخله. */
-        return outcome != tv.own.owntv.core.adverts.AdvertOutcome.ABORTED
+        /* ⚠ المنح للمكتمل وحده. من تخطّى أو ألغى لم يشترِ شيئاً — ولو مُنح
+             لصار «ابدأ الإعلان ثمّ تخطَّه» هو الطريق الأرخص، ولما شاهد أحدٌ
+             إعلاناً كاملاً بعد أوّل يوم. */
+        if (outcome == tv.own.owntv.core.adverts.AdvertOutcome.COMPLETED &&
+            decision.spot.grantMinutes > 0 && adverts.ledger.applies
+        ) {
+            runCatching { adverts.ledger.grant(pid, decision.spot.grantMinutes) }
+        }
+
+        Log.i(ADVERT_TAG, "advert #${decision.spot.id} ended: $outcome after ${watchedMs}ms")
+        return outcome
+    }
+
+    /* ═══════════════ المجّانيّ: العدّاد والوسطيّ ═══════════════ */
+
+    /**
+     * يعدّ دقائق المشاهدة للمشترك المجّانيّ، ويتصرّف حين تنفد.
+     *
+     * ③ يُحسب بالدقيقة المشاهَدة لا بفتح القناة: من يفتح عشر قنوات في دقيقة
+     *   يستهلك دقيقة لا عشراً. ولذلك يُسأل عن التشغيل الفعليّ لا عن التنقّل.
+     *
+     * ⚠ لا يعمل شيء من هذا لمشتركٍ مدفوع: [AdvertLedger.applies] تُغلق الباب
+     *   من أوّله، فلا استعلام قاعدة ولا مؤقّت يستهلك بطّاريّة بلا سبب.
+     */
+    private fun startEntitlementMeter() {
+        if (!tv.own.owntv.BuildConfig.SALAMTV_ADVERTS) return
+        viewModelScope.launch {
+            while (isActive) {
+                delay(METER_TICK_MS)
+                if (!adverts.ledger.applies) continue
+
+                val playing = if (_liveOnExo.value) previewEngine.isPlaying.value else player.isPlaying.value
+                if (!playing) continue
+
+                val pid = currentProfileId() ?: continue
+                val left = runCatching { adverts.ledger.consume(pid, 1) }.getOrNull() ?: continue
+                if (left <= 0) outOfMinutes(pid)
+            }
+        }
+    }
+
+    /**
+     * نفد الرصيد: يُعرض إعلانٌ وسطيّ يشتري المزيد، وإلّا تتوقّف المشاهدة.
+     *
+     * ⚠ الترتيب مقصود: الإعلان أوّلاً والتوقّف آخراً. عكسُه يوقف الصورة ثمّ
+     *   يعرض إعلاناً، فيظنّ المشاهد أنّ القناة انقطعت ثمّ فوجئ بإعلان.
+     */
+    private suspend fun outOfMinutes(pid: Long) {
+        val channel = _previewChannel.value ?: return
+        val categoryRemote = channel.categoryId?.let { categoryDao.getById(it)?.remoteId }
+
+        val decision = runCatching {
+            adverts.gate.decide(
+                pid,
+                channel.remoteId.orEmpty(),
+                categoryRemote,
+                tv.own.owntv.core.adverts.TuneReason.DIRECT,
+                channelName = channel.name,
+                placement = tv.own.owntv.core.adverts.Placement.MID_ROLL,
+            )
+        }.getOrNull()
+
+        if (decision == null) {
+            Log.i(ADVERT_TAG, "out of minutes and no advert available — stopping playback")
+            previewEngine.stop()
+            player.stop()
+            _outOfTime.value = true
+            return
+        }
+
+        val outcome = showAdvert(decision, pid)
+        if (outcome == tv.own.owntv.core.adverts.AdvertOutcome.COMPLETED &&
+            adverts.ledger.balance.value > 0
+        ) {
+            // RESUME لا DIRECT: البوّابة لا تُعلن على استئنافٍ تلا إعلاناً للتوّ.
+            playChannel(channel, tv.own.owntv.core.adverts.TuneReason.RESUME)
+        } else {
+            previewEngine.stop()
+            player.stop()
+            _outOfTime.value = true
+        }
     }
 
     /** Live engine routing decisions go to Logcat (unconditionally, so a release build can be diagnosed
@@ -2386,6 +2505,9 @@ class LiveViewModel(
 
         /** وسمٌ واحد لكلّ ما يخصّ الإعلانات — `adb logcat -s SalamTVAds` يكفي للتشخيص. */
         const val ADVERT_TAG = "SalamTVAds"
+
+        /** دقيقةٌ واحدة — وحدة الاستهلاك عند المجّانيّ. */
+        private const val METER_TICK_MS = 60_000L
 
         /** How long a channel must stay tuned before it counts as watched — see [recordLiveHistory]. */
         const val HISTORY_DEBOUNCE_MS = 5_000L

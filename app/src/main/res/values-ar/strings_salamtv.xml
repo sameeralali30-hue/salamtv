@@ -54,4 +54,9 @@
     <string name="salamtv_advert_skip">تخطّي الإعلان</string>
     <string name="salamtv_advert_hold_back">اضغط «رجوع» مطوّلاً للإلغاء</string>
     <string name="salamtv_preview_blocked_advert">إعلان أوّلاً</string>
+    <!-- ══ الباقة المجّانيّة ══ -->
+    <string name="salamtv_out_of_time_title">انتهى وقتك المجّانيّ اليوم</string>
+    <string name="salamtv_out_of_time_body">استهلكت وقت المشاهدة المجّانيّ لهذا اليوم. يعود غداً — أو رقِّ باقتك لمشاهدة بلا حدّ وبلا إعلانات.</string>
+    <string name="salamtv_out_of_time_ok">حسناً</string>
+    <string name="salamtv_minutes_left">يتبقّى %1$d دقيقة اليوم</string>
 </resources>

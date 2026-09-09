@@ -163,9 +163,10 @@
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	no decodable audio track
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	no picture within ${ladderBudgetMs.value / 1000}s of tuning
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	no video frame rendered (audio plays, no picture)
+1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	out of minutes and no advert available — stopping playback
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	played, then stalled for ${EXO_STALL_HANDOFF_MS / 1000}s without recovering
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	provider refuses ExoPlayer's signed segment URLs
-1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	showing advert #${decision.spot.id} before '${channel.name}'
+1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	showing advert #${decision.spot.id} (${decision.placement})
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	stalker fullscreen resolve failed '${channel.name}'
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	stalker mpv resolve failed '${channel.name}'
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	stalker preview resolve failed '${channel.name}'
@@ -522,11 +523,12 @@
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	poll
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	redeemed
 2	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	refused
-1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	register ok (redeemed=${json.optBoolean("redeemed")})
+1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	register ok (redeemed=${json.optBoolean("redeemed")} selfServe=$selfServe)
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	register refused
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	register transport failure: ${e.javaClass.simpleName}
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	reset_hours
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	rev
+1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	self_serve
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	state
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	status
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	sub_end

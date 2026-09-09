@@ -662,6 +662,9 @@ fun OwnTVShell(
     val advert by liveVm.advert.collectAsStateWithLifecycle()
     val advertActive = advert != null
 
+    /** نفد وقت المشاهدة المجّانيّ ولا إعلان يشتري المزيد. */
+    val outOfTime by liveVm.outOfTime.collectAsStateWithLifecycle()
+
     // ⚠ `&& !advertActive`: هذا المعالج على الصندوق **الخارجيّ**، فيرى الرجوع
     //   قبل طبقة الإعلان. بدونه يسرق الضغط المطوّل مخرجَ الإلغاء ويحوّله إلى
     //   تبديل تركيز. (لا يُسلَّح إلّا في MINI اليوم، لكنّ الاعتماد على ذلك
@@ -1274,6 +1277,12 @@ fun OwnTVShell(
                     } else null,
                     modifier = Modifier.fillMaxSize(),
                 )
+
+                /* نفاد الوقت: فوق كلّ شيء، ويبقى حتّى يُقرّ به المستخدم —
+                   بخلاف الإعلان الذي يمضي من نفسه. */
+                if (outOfTime) {
+                    tv.own.owntv.features.adverts.OutOfTimeDialog(onDismiss = liveVm::dismissOutOfTime)
+                }
 
                 /* ══ طبقة الإعلان ══
                    آخر ما يُركَّب داخل صندوق المشغّل، فلا يُرسم فوقها شيء. ولا

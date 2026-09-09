@@ -63,6 +63,7 @@ class ShellViewModel(
     private val subscriberLogin: tv.own.owntv.features.setup.SubscriberLoginClient,
     private val advertRepository: tv.own.owntv.core.adverts.AdvertRepository,
     private val advertGate: tv.own.owntv.core.adverts.AdvertGate,
+    private val advertLedger: tv.own.owntv.core.adverts.AdvertLedger,
     private val advertReporter: tv.own.owntv.features.adverts.AdvertReporter,
 ) : ViewModel() {
 
@@ -207,7 +208,20 @@ class ShellViewModel(
                    وتُصرَّف في كلّ نبضة لا عند تغيّر البصمة فقط: ما عُرض أمس
                    يجب أن يصل اليوم حتّى لو لم يتغيّر إعلانٌ واحد. */
                 runCatching {
-                    advertReporter.drain(u, p, advertRepository.policy.value.reportMaxBatch)
+                    val pid = currentProfileId()
+                    // الدقائق المستهلَكة تسافر مع التقرير، والرصيد المعتمَد يعود
+                    // معه — فيتصحّح الدفتر المحلّيّ في دورة نبضٍ واحدة لا أكثر.
+                    val consumed = if (pid != null && advertLedger.applies) {
+                        advertLedger.consumedToday(pid)
+                    } else {
+                        0
+                    }
+                    val balance = advertReporter.drain(
+                        u, p, advertRepository.policy.value.reportMaxBatch, consumed,
+                    )
+                    if (pid != null && balance != null && balance >= 0) {
+                        advertLedger.applyServerBalance(pid, balance)
+                    }
                 }.onFailure { Log.w(TAG, "advert report drain failed: ${it.javaClass.simpleName}") }
             }
         }
