@@ -658,7 +658,16 @@ fun OwnTVShell(
     var shortcutKeyCode by remember { mutableStateOf(android.view.KeyEvent.KEYCODE_UNKNOWN) }
     var shortcutLongFired by remember { mutableStateOf(false) }
     var shortcutHoldJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
-    val longPressBackArmed = playerMode == PlayerMode.MINI && !showExit && !showAvatarPicker && !showPlaylistPicker
+    /** الإعلان المعروض الآن، أو null — يقود الطبقة وحُرّاس المدخلات الثلاثة. */
+    val advert by liveVm.advert.collectAsStateWithLifecycle()
+    val advertActive = advert != null
+
+    // ⚠ `&& !advertActive`: هذا المعالج على الصندوق **الخارجيّ**، فيرى الرجوع
+    //   قبل طبقة الإعلان. بدونه يسرق الضغط المطوّل مخرجَ الإلغاء ويحوّله إلى
+    //   تبديل تركيز. (لا يُسلَّح إلّا في MINI اليوم، لكنّ الاعتماد على ذلك
+    //   يجعل الحماية رهينة إعدادٍ قد يتغيّر.)
+    val longPressBackArmed = playerMode == PlayerMode.MINI && !showExit && !showAvatarPicker &&
+        !showPlaylistPicker && !advertActive
     // Media keys (§8 tier 3) act on the docked window wherever focus is — but only if nothing nearer
     // claimed them first, which is why this is a bubbling handler: a focused browse list still gets its
     // CH+/CH− paging, and the full-screen HUD still owns zapping.
@@ -1175,7 +1184,16 @@ fun OwnTVShell(
                 // position on the other engine) rather than Live TV's compatibility toggle, which would
                 // re-tune the live stream and jump the user to the current programme.
                 val isTunedLive = isLiveChannel && !catchupActive
-                PlayerHud(
+                /* ══ الـHUD لا يُركَّب أثناء الإعلان ══
+                   ⚠ `inert` وحده لا يكفي: هو يمنع خطف التركيز، **ولا يُخفي
+                     شيئاً**. أوّل تجربة على الجهاز أظهرت بطاقة الساعة وأزرار
+                     التشغيل وشريط الأدوات كلّها فوق الإعلان — مقروءة وتبدو
+                     قابلة للضغط. إعلانٌ تحته هيكل مشغّلٍ كامل ليس إعلاناً
+                     إجباريّاً بل شاشةٌ مشوّشة.
+
+                     وحذفُه من التركيب يأخذ معه معالجاته ومؤقّتاته أيضاً، وهو
+                     أنظف من إخفائه بشفافيّةٍ تُبقي أثره في شجرة المدخلات. */
+                if (!advertActive) PlayerHud(
                     player = if (liveOnExo) liveVm.previewEngine else mpvEngine, // HUD drives the active engine
                     onBack = exitPlayer,
                     onPip = dockPlayer, // PiP/dock works for live on either engine now
@@ -1256,6 +1274,18 @@ fun OwnTVShell(
                     } else null,
                     modifier = Modifier.fillMaxSize(),
                 )
+
+                /* ══ طبقة الإعلان ══
+                   آخر ما يُركَّب داخل صندوق المشغّل، فلا يُرسم فوقها شيء. ولا
+                   توجد إلّا بينما يُعرض إعلان، فيُحرَّر مشغّلها فور انتهائه. */
+                advert?.let { decision ->
+                    tv.own.owntv.features.adverts.AdvertOverlay(
+                        decision = decision,
+                        channelName = decision.channelName,
+                        onFinished = liveVm::onAdvertFinished,
+                    )
+                }
+
                 // OpenSubtitles search overlay (movies/episodes) — drawn above the HUD; the HUD is inert
                 // while it's open so the D-pad stays on the overlay.
                 if (showSubtitleSearch) {

@@ -690,6 +690,34 @@ class LiveViewModel(
     private val _previewBlockedSingleSession = MutableStateFlow(false)
     val previewBlockedSingleSession: StateFlow<Boolean> = _previewBlockedSingleSession.asStateFlow()
 
+    /* ═══════════════════ الإعلان ═══════════════════ */
+
+    private val _advert = MutableStateFlow<tv.own.owntv.core.adverts.AdvertDecision?>(null)
+
+    /** الإعلان المعروض الآن، أو null. تراقبه الطبقة في `OwnTVShell`. */
+    val advert: StateFlow<tv.own.owntv.core.adverts.AdvertDecision?> = _advert.asStateFlow()
+
+    /**
+     * ما ينتظره [playChannel] حتّى تنتهي الطبقة.
+     *
+     * `CompletableDeferred` لا `Channel`: النتيجة واحدة لا تيّار، ومن ينتظرها
+     * واحد. والقيمة تصل مرّةً ثمّ يُرمى الكائن.
+     */
+    private var advertOutcome: kotlinx.coroutines.CompletableDeferred<Pair<tv.own.owntv.core.adverts.AdvertOutcome, Long>>? = null
+
+    /**
+     * تُنادى من الطبقة حين ينتهي العرض بأيّ سبب — اكتمالاً أو تخطّياً أو
+     * إلغاءً أو عطلاً.
+     *
+     * ⚠ يجب أن تُنادى في **كلّ** المسارات بلا استثناء. مسارٌ واحد لا يُناديها
+     *   يترك [playChannel] معلّقاً إلى الأبد، فلا تُفتح القناة ولا تظهر رسالة:
+     *   شاشةٌ سوداء بلا سبب. ولهذا الحارس والإيقاف القسريّ في الطبقة ليسا
+     *   تحسيناً بل شرطاً.
+     */
+    fun onAdvertFinished(outcome: tv.own.owntv.core.adverts.AdvertOutcome, watchedMs: Long) {
+        advertOutcome?.complete(outcome to watchedMs)
+    }
+
     fun playPreview(channel: ChannelEntity) {
         if (channel.categoryId != null && channel.categoryId in hiddenCategoryIds.value) return
         // Don't touch the engine while it's promoted to full-screen. Clicking OK before the in-pane preview's
@@ -697,6 +725,43 @@ class LiveViewModel(
         // (preview audio is off) — so full-screen would play with no sound. ensurePlaying() sets liveOnExo
         // the instant OK is pressed, before this can run.
         if (_liveOnExo.value) return
+
+        /* ⚠ تسريب المعاينة: هذا المسار **لا يمرّ بـ[playChannel]** إطلاقاً.
+             ولولا هذا الفحص لرأى المشاهد بثّ القناة المستهدفة بمجرّد أن يستقرّ
+             المؤشّر عليها (بعد ٧٠٠ م.ث) — صامتاً، لكنّه على هاتفٍ مشاهدة —
+             فيسقط الإعلان كلّه بالتحويم بلا ضغطة واحدة.
+
+             ومشروطٌ بالأهليّة الكاملة لا بـ«القناة مستهدفة»: متى استُهلك سقف
+             اليوم عادت المعاينة، فالكبح بقدر ما يُجنى لا أكثر. وهو نفس ما يفعله
+             [_previewBlockedSingleSession] لسببٍ آخر — والجزء يقول ما يجري بدل
+             أن يبقى أسود صامتاً، وهو ما يُقرأ كقناةٍ معطوبة (F31). */
+        if (tv.own.owntv.BuildConfig.SALAMTV_ADVERTS) {
+            viewModelScope.launch {
+                val pid = currentProfileId()
+                val blocked = pid != null && advertGate.wouldFire(
+                    pid,
+                    channel.remoteId.orEmpty(),
+                    channel.categoryId?.let { categoryDao.getById(it)?.remoteId },
+                )
+                if (blocked) {
+                    previewEngine.stop()
+                    _previewBlockedByAdvert.value = true
+                } else {
+                    _previewBlockedByAdvert.value = false
+                    startPreview(channel)
+                }
+            }
+            return
+        }
+        startPreview(channel)
+    }
+
+    /** true بينما تُكبح المعاينة لأنّ إعلاناً ينتظر هذه القناة. */
+    private val _previewBlockedByAdvert = MutableStateFlow(false)
+    val previewBlockedByAdvert: StateFlow<Boolean> = _previewBlockedByAdvert.asStateFlow()
+
+    /** جسم المعاينة الأصليّ، مفصولاً ليسبقه الفحص أعلاه. */
+    private fun startPreview(channel: ChannelEntity) {
         val source = sourceById[channel.sourceId]
         if (streamUrlResolver.needsResolve(source)) { playPreviewStalker(channel, source!!); return }
         val targetUrl = tuneUrl(channel, source)
@@ -1222,12 +1287,8 @@ class LiveViewModel(
         /* ══ بوّابة الإعلان ══
            موضعها هنا بالضبط: بعد فحص المحتوى (فلا يُعلَن على قناةٍ لن تُفتح)،
            وبعد تحويلة المشغّل الخارجيّ (مشغّلٌ آخر لا يعرض إعلاننا)، وقبل أن
-           يُلمس أيّ محرّك بثّ.
-
-           ⚠ المرحلة الحاليّة **تُسجّل ولا تعرض**. الغرض أن نرى القرار في
-             السجلّ على أجهزةٍ حقيقيّة — أيّ قناة تُطابق، وأيّ سقفٍ يمنع، وهل
-             نزل الملفّ — قبل أن يرى مشتركٌ واحد إعلاناً. */
-        runCatching { advertDryRun(pid, channel, reason) }
+           يُلمس أيّ محرّك بثّ. */
+        if (!runAdvertIfDue(pid, channel, reason)) return
 
         _previewChannel.value = channel
         clearTimeshift() // normal live = not timeshifted
@@ -1277,32 +1338,68 @@ class LiveViewModel(
     }
 
     /**
-     * يسأل البوّابة ويكتب جوابها في السجلّ، بلا أن يعرض شيئاً.
+     * يعرض إعلاناً إن كان مستحقّاً، وينتظر انتهاءه.
      *
      * معرّفا القناة والفئة المرسلان هما **معرّفا اللوحة** (`remoteId`) لا
      * مفاتيح Room: الإعلان يُستهدف بما تعرفه اللوحة، والخلط بين المعرّفين
      * يُنتج إعلاناً يُضبط على قناةٍ ويظهر على أخرى — عطلٌ لا يُكتشف إلّا من
      * شكوى مشترك.
+     *
+     * @return true لتُفتح القناة، false إن ألغى المشاهد فلا تُفتح.
      */
-    private suspend fun advertDryRun(
+    private suspend fun runAdvertIfDue(
         pid: Long,
         channel: ChannelEntity,
         reason: tv.own.owntv.core.adverts.TuneReason,
-    ) {
-        if (!tv.own.owntv.BuildConfig.SALAMTV_ADVERTS) return
+    ): Boolean {
+        if (!tv.own.owntv.BuildConfig.SALAMTV_ADVERTS) return true
+
         val channelRemote = channel.remoteId.orEmpty()
         val categoryRemote = channel.categoryId?.let { categoryDao.getById(it)?.remoteId }
-        val decision = advertGate.decide(pid, channelRemote, categoryRemote, reason)
-        if (decision != null) {
-            Log.i(
-                ADVERT_TAG,
-                "WOULD SHOW #${decision.spot.id} '${decision.spot.title}' " +
-                    "(${decision.spot.durationSecs}s, skip=${decision.spot.skipAfterSecs}) " +
-                    "before '${channel.name}' [remote=$channelRemote cat=$categoryRemote reason=$reason]",
-            )
-        } else {
-            Log.d(ADVERT_TAG, "no advert for '${channel.name}' [remote=$channelRemote cat=$categoryRemote reason=$reason]")
+
+        val decision = runCatching {
+            advertGate.decide(pid, channelRemote, categoryRemote, reason, channelName = channel.name)
+        }.getOrNull()
+
+        if (decision == null) {
+            Log.d(ADVERT_TAG, "no advert for '${channel.name}' [remote=$channelRemote reason=$reason]")
+            return true
         }
+
+        /* ⚠ إيقاف المحرّكين قبل الإعلان، لسببين لا واحد:
+             • فكُّ ترميزٍ واحد حيّ في كلّ لحظة. صندوقٌ رخيص يحمل مُفكَّيْ ترميز
+               معاً قد يفشل في فتح أحدهما.
+             • [LivePreviewEngine.stop] يصفّر `currentUrl`، وهذا ما يمنع
+               [startOnExo] من «الترقية بإلغاء الكتم» بعد الإعلان: لولاه لوجد
+               الرابط مطابقاً فرفع الكتم عن محرّكٍ متوقّف — صورةٌ لا تأتي أبداً.
+               و`stalkerPreviewCmd` حقلٌ هنا لا في المحرّك، فيُصفَّر يدويّاً. */
+        previewEngine.stop()
+        stalkerPreviewCmd = null
+        setStalkerReconnect(null)
+        player.stop()
+
+        advertGate.begin(decision, pid)
+        val waiter = kotlinx.coroutines.CompletableDeferred<Pair<tv.own.owntv.core.adverts.AdvertOutcome, Long>>()
+        advertOutcome = waiter
+        _advert.value = decision
+        Log.i(ADVERT_TAG, "showing advert #${decision.spot.id} before '${channel.name}'")
+
+        val (outcome, watchedMs) = try {
+            waiter.await()
+        } finally {
+            // ⚠ في `finally`: إلغاء الوظيفة (انتقالٌ إلى قناة أخرى أثناء
+            //   الإعلان) يجب أن يُزيل الطبقة أيضاً، وإلّا بقيت معلّقة فوق
+            //   شاشةٍ لا علاقة لها بها.
+            _advert.value = null
+            advertOutcome = null
+        }
+
+        runCatching { advertGate.finish(decision.eventUid, outcome, watchedMs) }
+        Log.i(ADVERT_TAG, "advert #${decision.spot.id} ended: $outcome after ${watchedMs}ms")
+
+        /* الإلغاء لا يفتح القناة — وهذا ما يجعل مخرج الطوارئ غير تحايل:
+           لا يربح المستخدم منه شيئاً سوى الخروج ممّا دخله. */
+        return outcome != tv.own.owntv.core.adverts.AdvertOutcome.ABORTED
     }
 
     /** Live engine routing decisions go to Logcat (unconditionally, so a release build can be diagnosed

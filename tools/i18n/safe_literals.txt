@@ -41,6 +41,14 @@
 1	file-path	app/src/main/java/tv/own/owntv/OwnTVApp.kt	image_cache
 1	performance	app/src/main/java/tv/own/owntv/OwnTVApp.kt	koin-started
 3	empty	app/src/main/java/tv/own/owntv/core/i18n/LocalizedContent.kt	\0
+1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	SalamTVAds
+1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert #${spot.id} finishing: $outcome at ${elapsed}s
+1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert #${spot.id} not ready within ${READY_TIMEOUT_MS}ms — opening the channel
+1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert #${spot.id} ready in ${System.currentTimeMillis() - startedAt}ms
+1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert focus attempt ${attempt + 1} failed: ${it.javaClass.simpleName}
+1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert overlay holds focus
+1	log	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	advert overlay never took focus — keys are not trapped
+2	protocol	app/src/main/java/tv/own/owntv/features/adverts/AdvertOverlay.kt	image
 2	empty	app/src/main/java/tv/own/owntv/features/customize/BulkRenameDialogs.kt	\0
 1	assertion	app/src/main/java/tv/own/owntv/features/customize/CustomizeItemsViewModel.kt	EPISODE not applicable
 2	assertion	app/src/main/java/tv/own/owntv/features/customize/CustomizeItemsViewModel.kt	EPISODE not applicable to category items
@@ -118,7 +126,6 @@
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	'${channel.name}' — giving up: $detail
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	'${channel.name}' — no fallback left ($detail)
 2	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	'${channel.name}': $detail
-1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	(${decision.spot.durationSecs}s, skip=${decision.spot.skipAfterSecs})
 1	technical	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	ExoPlayer
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	ExoPlayer gave up mid-stream: ${previewEngine.errorInfo.value?.raw ?: previewEngine.error.value}
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	ExoPlayer never opened it (${openBudgetMs / 1000}s, no frame and no error)
@@ -126,8 +133,7 @@
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	LiveEngine
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	OwnTVHome
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	SalamTVAds
-1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	WOULD SHOW #${decision.spot.id} '${decision.spot.title}'
-1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	before '${channel.name}' [remote=$channelRemote cat=$categoryRemote reason=$reason]
+1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	advert #${decision.spot.id} ended: $outcome after ${watchedMs}ms
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	catch-up '${ch.name}' prog='${programme.title}' -> ${tv.own.owntv.core.network.HttpClient.redactUrl(url)}
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	catch-up external '${ch.name}' prog='${programme.title}'
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	engine toggle '${channel.name}' -> ${if (goToMpv) "mpv" else "exoplayer"} (currentlyOnExo=${_liveOnExo.value})
@@ -141,12 +147,13 @@
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	mpv (panel refuses segments)
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	mpv couldn't play it: ${failure.second}
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	mpv never opened it (${MPV_OPEN_TIMEOUT_MS / 1000}s, no picture and no error)
-1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	no advert for '${channel.name}' [remote=$channelRemote cat=$categoryRemote reason=$reason]
+1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	no advert for '${channel.name}' [remote=$channelRemote reason=$reason]
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	no decodable audio track
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	no picture within ${ladderBudgetMs.value / 1000}s of tuning
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	no video frame rendered (audio plays, no picture)
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	played, then stalled for ${EXO_STALL_HANDOFF_MS / 1000}s without recovering
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	provider refuses ExoPlayer's signed segment URLs
+1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	showing advert #${decision.spot.id} before '${channel.name}'
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	stalker fullscreen resolve failed '${channel.name}'
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	stalker mpv resolve failed '${channel.name}'
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	stalker preview resolve failed '${channel.name}'

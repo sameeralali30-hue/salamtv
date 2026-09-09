@@ -133,6 +133,7 @@ fun LiveScreen(
     val previewCategoryName by vm.previewCategoryName.collectAsStateWithLifecycle()
     val previewArmed by vm.previewArmed.collectAsStateWithLifecycle()
     val previewBlockedSingleSession by vm.previewBlockedSingleSession.collectAsStateWithLifecycle()
+    val previewBlockedAdvert by vm.previewBlockedByAdvert.collectAsStateWithLifecycle()
     val nowNext by vm.nowNext.collectAsStateWithLifecycle()
     val searchQuery by vm.searchQuery.collectAsStateWithLifecycle()
     val sortMode by vm.sortMode.collectAsStateWithLifecycle()
@@ -544,6 +545,7 @@ fun LiveScreen(
                     previewEngine = vm.previewEngine,
                     showVideo = effectivePreview,
                     singleSessionBlocked = previewBlockedSingleSession,
+                    advertBlocked = previewBlockedAdvert,
                 )
             }
         }
@@ -905,6 +907,8 @@ private fun LivePreviewPane(
     previewEngine: tv.own.owntv.player.LivePreviewEngine,
     showVideo: Boolean,
     singleSessionBlocked: Boolean = false,
+    /** المعاينة مكبوحة لأنّ إعلاناً يسبق هذه القناة — انظر أدناه. */
+    advertBlocked: Boolean = false,
 ) {
     val colors = OwnTVTheme.colors
     val previewState by previewEngine.state.collectAsStateWithLifecycle()
@@ -941,6 +945,24 @@ private fun LivePreviewPane(
             }
             if (previewLoading) {
                 OwnTVSpinner(sizeDp = 28)
+            }
+            /* ⚠ المعاينة مكبوحة لأنّ إعلاناً يسبق هذه القناة.
+                 لولا هذا السطر لبقي الجزء أسود صامتاً — وهو ما يُقرأ **قناةً
+                 معطوبة** لا «إعلانٌ قادم» (F31، نفس علّة القيد أدناه). والفرق
+                 بين الاثنين هو الفرق بين مشاهدٍ ينتظر ومشاهدٍ يبلّغ عن عطل. */
+            if (advertBlocked && !previewPlaying) {
+                Box(
+                    Modifier.align(Alignment.BottomCenter).padding(10.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.7f))
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.salamtv_preview_blocked_advert),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = androidx.compose.ui.graphics.Color.White,
+                    )
+                }
             }
             // One-stream provider with the stream already in use: explain the dead pane rather than
             // leaving the user to read it as a broken channel (F31).

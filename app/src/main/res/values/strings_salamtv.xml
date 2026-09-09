@@ -56,4 +56,12 @@
     <string name="salamtv_register_action">Create</string>
     <string name="salamtv_register_working">Creating…</string>
     <string name="salamtv_register_have_account">I already have an account</string>
+    <!-- ══ الإعلانات ══ -->
+    <string name="salamtv_advert_label">Advertisement</string>
+    <string name="salamtv_advert_opening">Opening %1$s…</string>
+    <string name="salamtv_advert_remaining">%1$d s</string>
+    <string name="salamtv_advert_skip_in">Skip in %1$d</string>
+    <string name="salamtv_advert_skip">Skip advert</string>
+    <string name="salamtv_advert_hold_back">Hold Back to cancel</string>
+    <string name="salamtv_preview_blocked_advert">Advert first</string>
 </resources>
