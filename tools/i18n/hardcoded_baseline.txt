@@ -64,8 +64,6 @@
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	unknown
 3	app/src/main/java/tv/own/owntv/features/setup/SubscriberLoginScreen.kt	\0
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	subscription changed — rebuilding catalogue
-1	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	\0
-1	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	\0
 1	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	subscription changed — resyncing sourceId=${source.id}
 1	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	subscription_changed
 1	app/src/main/java/tv/own/owntv/features/shell/components/MediaDetailsScreen.kt	\0

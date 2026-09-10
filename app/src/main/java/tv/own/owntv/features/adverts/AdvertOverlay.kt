@@ -310,7 +310,10 @@ fun AdvertOverlay(
         Column(
             Modifier.align(Alignment.BottomStart).padding(24.dp),
         ) {
-            Text(
+            /* ⚠ «يُفتح الآن: …» لها معنى قبل قناة، ولا معنى لها عند فتح
+                 التطبيق — لا قناة هناك. وسطرٌ ناقص («Opening …») أسوأ من
+                 لا سطر: يبدو عطباً لا تصميماً. */
+            if (channelName.isNotBlank()) Text(
                 stringResource(R.string.salamtv_advert_opening, channelName),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,

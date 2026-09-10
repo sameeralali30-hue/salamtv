@@ -542,7 +542,7 @@
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	no change
 1	preference-key	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	rev
 1	preference-key	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	salamtv_subscription
-3	empty	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	\0
+5	empty	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	\0
 2	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	Action
 1	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	All Channels
 1	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	All Downloads
@@ -568,9 +568,10 @@
 1	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	ssa
 1	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	vtt
 1	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	webvtt
-5	empty	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	\0
+8	empty	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	\0
 1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	OwnTVHome
 1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	activeProfileChanged profile=$pid androidTvHomeEnabled=${settings.androidTvHomeEnabled.first()}
+1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	advert #${decision.spot.id} ended: $outcome after ${watchedMs}ms
 1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	advert report drain failed: ${it.javaClass.simpleName}
 1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	advert rules refreshed (rev=$rev)
 2	technical	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	auto_refresh
@@ -579,6 +580,8 @@
 1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	epgRefill check failed
 1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	epgRefill sourceId=${src.id} — synced before but guide is empty, re-fetching
 1	technical	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	migration_refill
+1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	no app-open advert within the window
+1	log	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	showing advert #${decision.spot.id} (ON_APP_OPEN)
 2	empty	app/src/main/java/tv/own/owntv/features/shell/components/CategoryRail.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/CategoryRail.kt	__rail_search__
 1	empty	app/src/main/java/tv/own/owntv/features/shell/components/MediaDetailsScreen.kt	\0

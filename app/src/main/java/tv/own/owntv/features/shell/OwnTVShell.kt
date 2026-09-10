@@ -222,6 +222,9 @@ fun OwnTVShell(
     // up/down (CH+/CH-). Guide tunes start through LiveViewModel too (they set zapSource = LIVE_TV), so
     // there is exactly ONE zap path: liveVm's. The Guide keeps its own EpgViewModel only for the grid.
     val liveVm = org.koin.androidx.compose.koinViewModel<LiveViewModel>()
+    /* نفس نسخة MainActivity: koinViewModel داخل نطاق النشاط يعيد المخزَّن
+       لا نسخةً جديدة — فحالة إعلان الفتح واحدة بين الاثنين. */
+    val shellVm = org.koin.androidx.compose.koinViewModel<ShellViewModel>()
     val epgVm = org.koin.androidx.compose.koinViewModel<tv.own.owntv.features.epg.EpgViewModel>()
     val liveCanZap by liveVm.canZap.collectAsStateWithLifecycle()
     // Full-screen is running on the ExoPlayer engine (a promoted Live preview) rather than mpv.
@@ -660,7 +663,10 @@ fun OwnTVShell(
     var shortcutHoldJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     /** الإعلان المعروض الآن، أو null — يقود الطبقة وحُرّاس المدخلات الثلاثة. */
     val advert by liveVm.advert.collectAsStateWithLifecycle()
-    val advertActive = advert != null
+    val openAdvert by shellVm.openAdvert.collectAsStateWithLifecycle()
+    /* ⚠ الاثنان معاً: إعلانُ الفتح يحبس المفاتيح والرجوع كما يفعل القبليّ،
+         وإلّا خرج المستخدم منه بضغطة رجوعٍ واحدة أو حرّك التركيز تحته. */
+    val advertActive = advert != null || openAdvert != null
 
     /** نفد وقت المشاهدة المجّانيّ ولا إعلان يشتري المزيد. */
     val outOfTime by liveVm.outOfTime.collectAsStateWithLifecycle()
@@ -1472,6 +1478,24 @@ fun OwnTVShell(
                     onViewChangelog = { showChangelog = true },
                 )
             }
+        }
+
+        /* ═══ إعلان فتح التطبيق ═══
+             يُركَّب هنا — آخر عنصرٍ في الصندوق الخارجيّ — لا في صندوق
+             المشغّل حيث يعيش الإعلان القبليّ.
+
+             ⚠ والسبب أنّ صندوق المشغّل لا يوجد أصلاً عند الفتح:
+               `if (playerMode == FULLSCREEN || playerMode == MINI)`.
+               فطبقةٌ داخله لا تُرسم على الشاشة الرئيسة إطلاقاً.
+
+             وكونه الأخير يجعله يُرسم فوق كلّ شيء — القوائم والنوافذ
+             وشريط التحديث — وهو المطلوب: طبقةٌ لا يُرى من تحتها شيء. */
+        openAdvert?.let { decision ->
+            tv.own.owntv.features.adverts.AdvertOverlay(
+                decision = decision,
+                channelName = "",
+                onFinished = shellVm::onOpenAdvertFinished,
+            )
         }
     }
     }

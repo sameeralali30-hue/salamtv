@@ -69,6 +69,15 @@ class ShellViewModel(
 
     companion object {
         private const val TAG = "OwnTVHome"
+
+        /**
+         * النافذة التي يُحاول فيها إعلانُ الفتح بعد الإقلاع.
+         *
+         * تكفي لجلب القواعد من الخادم وتنزيل ملفٍّ صغير على شبكةٍ عاديّة.
+         * وبعدها يُترك الأمر: إعلانُ فتحٍ يظهر بعد دقيقة من الاستعمال لم
+         * يعد إعلانَ فتح، بل مقاطعةً في منتصف التصفّح.
+         */
+        private const val OPEN_ADVERT_WINDOW_MS = 45_000L
         /** Minimum gap between resume-triggered staleness checks, to avoid re-running when onStart fires
          *  close to a prior check (rotation, rapid background/foreground). Cold-start checks are NOT
          *  throttled by time — see [coldStartCheckDone]. */
@@ -177,6 +186,35 @@ class ShellViewModel(
      */
     private var advertWatchStarted = false
 
+    /* ═══════════════════════════════════════════════════════════════════
+     *  إعلانُ فتح التطبيق
+     * ───────────────────────────────────────────────────────────────────
+     *  الموضع الثالث، وقد كان معرّفاً في المخطّط ومعطّلاً في اللوحة لأنّه
+     *  لم يُبنَ. وهو **أقلّ المواضع إزعاجاً**: يجني انطباعاً كاملاً في
+     *  لحظةٍ لا يطلب فيها المشاهد شيئاً بعد — لا يقطع بثّاً، ولا يقف بين
+     *  المستخدم وقناةٍ ضغط عليها للتوّ.
+     *
+     *  ⚠ ثلاثة قيود يفرضها الموضع نفسه:
+     *
+     *    ① **لا قناة**. فالاستهداف بالقناة أو الفئة لا يمكن أن يطابق هنا،
+     *      ويُمرَّر معرّفٌ فارغ فتسقط تلقائيّاً في [matchesTarget]. أي أنّ
+     *      «عند فتح التطبيق» يعمل مع استهداف **الكلّ** وحده — وهذا صحيحٌ
+     *      منطقيّاً لا نقصٌ في التنفيذ.
+     *
+     *    ② **مرّةً واحدة لكلّ تشغيل**. الحارس في الذاكرة لا في القرص:
+     *      «فتح التطبيق» يعني عمليّةً جديدة، وقتلُ التطبيق وإعادتُه فتحٌ
+     *      جديد بحقّ. وسقوف `session` و`day` تحكم التكرار بعد ذلك.
+     *
+     *    ③ **بعد أن تصل القواعد وتُنزَّل الوسائط**. الإطلاق عند الإقلاع
+     *      مباشرةً يجد سياسةً فارغة أو ملفّاً لم ينزل، فيُهدر الفرصة بلا
+     *      إعلان. ولذلك يُعلَّق على أوّل سياسةٍ صالحة تصل.
+     */
+    private val _openAdvert =
+        MutableStateFlow<tv.own.owntv.core.adverts.AdvertDecision?>(null)
+    val openAdvert: StateFlow<tv.own.owntv.core.adverts.AdvertDecision?> = _openAdvert.asStateFlow()
+
+    private var openAdvertDone = false
+
     private fun watchAdvertRules() {
         if (!tv.own.owntv.BuildConfig.SALAMTV_ADVERTS) return
         // ⚠ يُستدعى من startSubscriptionBeat، وهي تُستدعى عند كلّ عودةٍ إلى
@@ -187,6 +225,10 @@ class ShellViewModel(
         viewModelScope.launch {
             // ما بقي بلا نتيجة من تشغيلٍ سابق يُختم مرّةً هنا.
             runCatching { advertGate.sealAbandoned() }
+
+            /* ③ إعلان الفتح يُعلَّق على أوّل سياسةٍ صالحة، لا على الإقلاع:
+                 عند الإقلاع لم تصل القواعد ولم تُنزَّل الوسائط بعد. */
+            launch { awaitOpenAdvert() }
 
             /* ⚠ العدّاد لا الحالة.
                  `status` تدفّقُ حالةٍ لا يُشعر إلّا عند الاختلاف، وحين لا
@@ -564,6 +606,71 @@ class ShellViewModel(
         val values = AccentColor.entries
         val next = values[(accent.value.ordinal + 1) % values.size]
         setAccent(next)
+    }
+
+    /**
+     * ينتظر أوّل سياسةٍ صالحة ثمّ يسأل البوّابة مرّةً واحدة.
+     *
+     * ⚠ `first { … }` لا `collect`: المطلوب لحظةٌ واحدة لا مراقبةٌ دائمة.
+     *   ولو بقي يراقب لأطلق إعلاناً كلّما تغيّرت القواعد والمستخدم يتصفّح.
+     */
+    private suspend fun awaitOpenAdvert() {
+        if (!tv.own.owntv.BuildConfig.SALAMTV_ADVERTS || openAdvertDone) return
+
+        /* ⚠ لا تُعلَّق المحاولة على **أوّل** سياسةٍ صالحة.
+
+             عند الإقلاع تُستعاد السياسة من القرص فوراً — وهي قواعد الأمس.
+             فلو سألنا البوّابة عندها وأجابت «لا إعلان» لأقفلنا الباب قبل
+             أن تصل قواعد اليوم بثوانٍ. قِسته: `restored 2 advert(s)` ثمّ
+             `rules updated` بعدها بأربع ثوانٍ، والإعلان الصحيح في الثانية.
+
+             فنحاول عند **كلّ** سياسةٍ تصل، ضمن نافذةٍ زمنيّة تكفي لجلب
+             القواعد وتنزيل الوسائط. وأوّل قرارٍ إيجابيّ ينهي المحاولة —
+             ولا نُقفل عند السلبيّ، لأنّ «لا إعلان الآن» ليست «لا إعلان
+             أبداً» ما دامت الوسائط قد تكتمل بعد لحظة. */
+        kotlinx.coroutines.withTimeoutOrNull(OPEN_ADVERT_WINDOW_MS) {
+            advertRepository.policy.collect { policy ->
+                if (openAdvertDone) return@collect
+                if (!policy.enabled || policy.spots.isEmpty()) return@collect
+
+                val pid = currentProfileId() ?: return@collect
+                val decision = runCatching {
+                    advertGate.decide(
+                        pid,
+                        channelRemoteId = "",            // ① لا قناة عند الفتح
+                        categoryRemoteId = null,
+                        reason = tv.own.owntv.core.adverts.TuneReason.STARTUP,
+                        channelName = "",
+                        placement = tv.own.owntv.core.adverts.Placement.ON_APP_OPEN,
+                    )
+                }.getOrNull() ?: return@collect
+
+                openAdvertDone = true                    // ② مرّةً واحدة لكلّ تشغيل
+                runCatching { advertGate.begin(decision, pid) }
+                Log.i(TAG, "showing advert #${decision.spot.id} (ON_APP_OPEN)")
+                _openAdvert.value = decision
+                return@collect
+            }
+        }
+        if (!openAdvertDone) Log.d(TAG, "no app-open advert within the window")
+    }
+
+    /** يُختم إعلان الفتح ويُمنح رصيده إن اكتمل. */
+    fun onOpenAdvertFinished(outcome: tv.own.owntv.core.adverts.AdvertOutcome, watchedMs: Long) {
+        val decision = _openAdvert.value ?: return
+        _openAdvert.value = null
+        viewModelScope.launch {
+            runCatching { advertGate.finish(decision.eventUid, outcome, watchedMs) }
+            /* المنح للمكتمل وحده — نفس قاعدة الإعلان القبليّ. ولا يُمنح
+               لمدفوعٍ أصلاً لأنّ [AdvertLedger.applies] تُسقطه. */
+            if (outcome == tv.own.owntv.core.adverts.AdvertOutcome.COMPLETED &&
+                decision.spot.grantMinutes > 0 && advertLedger.applies
+            ) {
+                val pid = currentProfileId()
+                if (pid != null) runCatching { advertLedger.grant(pid, decision.spot.grantMinutes) }
+            }
+            Log.i(TAG, "advert #${decision.spot.id} ended: $outcome after ${watchedMs}ms")
+        }
     }
 
     private suspend fun currentProfileId(): Long? {
