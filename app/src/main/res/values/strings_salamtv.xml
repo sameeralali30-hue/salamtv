@@ -66,7 +66,8 @@
     <string name="salamtv_preview_blocked_advert">Advert first</string>
     <!-- ══ الباقة المجّانيّة ══ -->
     <string name="salamtv_out_of_time_title">That is your free viewing for today</string>
-    <string name="salamtv_out_of_time_body">You have used your free viewing time for today. It comes back tomorrow — or upgrade your plan for unlimited viewing with no adverts.</string>
+    <string name="salamtv_out_of_time_body">You have used your free viewing time for today. It comes back tomorrow — or activate a paid plan for unlimited viewing.</string>
+    <string name="salamtv_out_of_time_contact">To activate a subscription, contact us: %1$s</string>
     <string name="salamtv_out_of_time_ok">Got it</string>
     <string name="salamtv_minutes_left">%1$d min left today</string>
 </resources>

@@ -1287,7 +1287,10 @@ fun OwnTVShell(
                 /* نفاد الوقت: فوق كلّ شيء، ويبقى حتّى يُقرّ به المستخدم —
                    بخلاف الإعلان الذي يمضي من نفسه. */
                 if (outOfTime) {
-                    tv.own.owntv.features.adverts.OutOfTimeDialog(onDismiss = liveVm::dismissOutOfTime)
+                    tv.own.owntv.features.adverts.OutOfTimeDialog(
+                        contact = liveVm.advertContact(),
+                        onDismiss = liveVm::dismissOutOfTime,
+                    )
                 }
 
                 /* ══ طبقة الإعلان ══

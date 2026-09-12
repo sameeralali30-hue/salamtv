@@ -34,7 +34,7 @@ import tv.own.owntv.ui.theme.OwnTVTheme
  * ═══════════════════════════════════════════════════════════════════════════
  */
 @Composable
-fun OutOfTimeDialog(onDismiss: () -> Unit) {
+fun OutOfTimeDialog(contact: String, onDismiss: () -> Unit) {
     val colors = OwnTVTheme.colors
 
     tv.own.owntv.features.profiles.ProfileScrim(onDismiss = onDismiss, width = 480.dp) {
@@ -50,6 +50,16 @@ fun OutOfTimeDialog(onDismiss: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
+            /* جهة التفعيل من اللوحة، حرفيّاً كما كُتبت — المشغّل يقرّر الصيغة
+               (رقم بلا +، معرّف تيليجرام…) لا التطبيق. فارغة = لا سطر. */
+            if (contact.isNotBlank()) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    stringResource(R.string.salamtv_out_of_time_contact, contact),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = colors.onSurface,
+                )
+            }
             Spacer(Modifier.height(20.dp))
             Row(
                 Modifier.fillMaxWidth(),

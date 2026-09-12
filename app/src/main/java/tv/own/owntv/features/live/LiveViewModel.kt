@@ -725,6 +725,9 @@ class LiveViewModel(
 
     fun dismissOutOfTime() { _outOfTime.value = false }
 
+    /** جهة التفعيل التي يعرضها [tv.own.owntv.features.adverts.OutOfTimeDialog]. */
+    fun advertContact(): String = adverts.gate.policy.value.contact
+
     /**
      * تُنادى من الطبقة حين ينتهي العرض بأيّ سبب — اكتمالاً أو تخطّياً أو
      * إلغاءً أو عطلاً.
