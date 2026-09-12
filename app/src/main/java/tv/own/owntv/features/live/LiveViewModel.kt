@@ -1477,6 +1477,70 @@ class LiveViewModel(
                 if (left <= 0) outOfMinutes(pid)
             }
         }
+        startPaidMidRollTimer()
+    }
+
+    /* ═══════════════ المدفوع: إعلانٌ وسطيّ كلّ فترة ═══════════════ */
+
+    /**
+     * دقائق المشاهدة الفعليّة للمدفوع منذ آخر إعلانٍ وسطيّ (أو آخر محاولة).
+     * في الذاكرة عمداً: إعادة فتح التطبيق تُصفّره، والفاصل العامّ في البوّابة
+     * هو ما يمنع «افتح وأغلق» من أن يصير حيلةً لتفادي الإعلان — لا هذا العدّاد.
+     */
+    private var paidWatchedMinutes = 0
+
+    /**
+     * المدفوع لا رصيد له ولا نفاد — فلم يكن يرى إعلاناً أثناء المشاهدة أبداً؛
+     * [AdvertLedger.applies] تُغلق [startEntitlementMeter] من أوّله. هذا مسارٌ
+     * مستقلّ: يعدّ دقائق التشغيل الفعليّ، وكلّ [AdvertPolicy.paidMidRollMinutes]
+     * يطلب إعلاناً بموضع [Placement.MID_ROLL] ثمّ يستأنف القناة نفسها.
+     *
+     * ⚠ فروقٌ عن المجّانيّ مقصودة:
+     *   · لا يمنح دقائق ولا يستهلكها — الدفتر لا يُمسّ.
+     *   · إن لم يتوفّر إعلان (فاصل، سقف، لا ملفّ) تستمرّ المشاهدة بلا توقّف؛
+     *     التوقّف عقوبة المجّانيّ الذي نفد رصيده، لا المدفوع.
+     *   · تخطّي الإعلان أو إلغاؤه يستأنف القناة أيضاً — المدفوع دفع.
+     *   · ٠ في السياسة = المسار نائم؛ اللوحة تقرّر، والتطبيق يطيع دون تحديث.
+     */
+    private fun startPaidMidRollTimer() {
+        viewModelScope.launch {
+            while (isActive) {
+                delay(METER_TICK_MS)
+                val policy = adverts.gate.policy.value
+                val every = policy.paidMidRollMinutes
+                if (every <= 0 || !policy.enabled || policy.isFree) { paidWatchedMinutes = 0; continue }
+
+                val playing = if (_liveOnExo.value) previewEngine.isPlaying.value else player.isPlaying.value
+                if (!playing) continue
+
+                if (++paidWatchedMinutes < every) continue
+                paidWatchedMinutes = 0
+                val pid = currentProfileId() ?: continue
+                paidMidRoll(pid)
+            }
+        }
+    }
+
+    private suspend fun paidMidRoll(pid: Long) {
+        val channel = _previewChannel.value ?: return
+        val categoryRemote = channel.categoryId?.let { categoryDao.getById(it)?.remoteId }
+        val decision = runCatching {
+            adverts.gate.decide(
+                pid,
+                channel.remoteId.orEmpty(),
+                categoryRemote,
+                tv.own.owntv.core.adverts.TuneReason.DIRECT,
+                channelName = channel.name,
+                placement = tv.own.owntv.core.adverts.Placement.MID_ROLL,
+            )
+        }.getOrNull()
+        if (decision == null) {
+            Log.d(ADVERT_TAG, "paid mid-roll: nothing eligible — playback continues")
+            return
+        }
+        showAdvert(decision, pid)
+        // RESUME لا DIRECT: البوّابة لا تُعلن على استئنافٍ تلا إعلاناً للتوّ.
+        playChannel(channel, tv.own.owntv.core.adverts.TuneReason.RESUME)
     }
 
     /**

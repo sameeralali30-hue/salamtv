@@ -165,6 +165,7 @@
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	no picture within ${ladderBudgetMs.value / 1000}s of tuning
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	no video frame rendered (audio plays, no picture)
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	out of minutes and no advert available — stopping playback
+1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	paid mid-roll: nothing eligible — playback continues
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	played, then stalled for ${EXO_STALL_HANDOFF_MS / 1000}s without recovering
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	provider refuses ExoPlayer's signed segment URLs
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	showing advert #${decision.spot.id} (${decision.placement})
