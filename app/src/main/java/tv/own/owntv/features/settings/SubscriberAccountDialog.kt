@@ -128,11 +128,16 @@ fun SubscriberAccountDialog(
                        تظهر دائماً — التجديد والترقية يحتاجانها كما يحتاجها الانتهاء. */
                     val contact = status.contact.ifBlank { tv.own.owntv.BuildConfig.SALAMTV_WHATSAPP }
                     if (contact.isNotBlank()) {
-                        Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(12.dp))
                         Text(
                             stringResource(R.string.salamtv_account_contact, contact),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.primary,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        tv.own.owntv.features.salamtv.WhatsAppButton(
+                            contact,
+                            style = if (status.active) tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY else tv.own.owntv.ui.components.OwnTVButtonStyle.PRIMARY,
                         )
                     }
                 }

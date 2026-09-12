@@ -109,17 +109,22 @@ fun SubscriberLoginScreen(
         modifier.fillMaxSize().imePadding().roundedPanel().background(colors.background),
         contentAlignment = Alignment.Center,
     ) {
+        // هويّة صفحة الهبوط نفسها: الانتقال من الصفحة إلى التطبيق يبدو واحداً
+        tv.own.owntv.features.salamtv.AuroraBackground()
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = if (compact) 24.dp else 40.dp, vertical = if (compact) 12.dp else 40.dp)
-                .then(if (compact) Modifier.fillMaxWidth() else Modifier.width(460.dp)),
+                .then(if (compact) Modifier.fillMaxWidth() else Modifier.width(460.dp))
+                .then(if (compact) Modifier else Modifier.background(colors.surface.copy(alpha = 0.72f), androidx.compose.foundation.shape.RoundedCornerShape(24.dp)).padding(28.dp)),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (!compact) {
+                tv.own.owntv.features.salamtv.BrandGradientTitle(size = 40)
+                Spacer(Modifier.height(10.dp))
                 Text(
                     stringResource(R.string.salamtv_login_title),
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.titleLarge,
                     color = colors.onSurface,
                 )
                 Spacer(Modifier.height(6.dp))
@@ -169,7 +174,7 @@ fun SubscriberLoginScreen(
                 Text(
                     shown,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onSurfaceVariant,
+                    color = colors.tertiary,   // ذهبيّ التنبيه — يُقرأ كتنبيه لا كشرح
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -226,13 +231,8 @@ fun SubscriberLoginScreen(
             )
             // قبل الدخول لا لوحة تُسأل — رقم البناء هو المتاح
             if (tv.own.owntv.BuildConfig.SALAMTV_WHATSAPP.isNotBlank()) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    stringResource(R.string.salamtv_login_contact, tv.own.owntv.BuildConfig.SALAMTV_WHATSAPP),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.primary,
-                    textAlign = TextAlign.Center,
-                )
+                Spacer(Modifier.height(10.dp))
+                tv.own.owntv.features.salamtv.WhatsAppButton(tv.own.owntv.BuildConfig.SALAMTV_WHATSAPP, style = OwnTVButtonStyle.SECONDARY)
             }
             }
         }

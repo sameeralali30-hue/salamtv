@@ -142,7 +142,9 @@ fun Onboarding(
 
     Box(modifier = modifier.fillMaxSize().background(OwnTVTheme.colors.background)) {
         when (step) {
-            Step.WELCOME -> WelcomeScreen(onNext = { step = Step.DISCLAIMER })
+            // نسخة المزوّد: ثلاث شرائح تعريفيّة ثمّ التنبيه القانونيّ في الرابعة — ثمّ الدخول مباشرةً.
+            Step.WELCOME -> if (locked) tv.own.owntv.features.salamtv.SalamTVOnboarding(onDone = { step = Step.SIGN_IN })
+                            else WelcomeScreen(onNext = { step = Step.DISCLAIMER })
             Step.DISCLAIMER -> DisclaimerScreen(
                 // ═══ الدخول أوّلاً، ثمّ البروفايل ═══
                 //

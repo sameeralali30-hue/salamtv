@@ -1,21 +1,8 @@
 package tv.own.owntv.features.adverts
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import tv.own.owntv.R
-import tv.own.owntv.ui.components.OwnTVButton
-import tv.own.owntv.ui.theme.OwnTVTheme
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -35,38 +22,11 @@ import tv.own.owntv.ui.theme.OwnTVTheme
  */
 @Composable
 fun OutOfTimeDialog(contact: String, onDismiss: () -> Unit) {
-    val colors = OwnTVTheme.colors
-
-    tv.own.owntv.features.profiles.ProfileScrim(onDismiss = onDismiss, width = 480.dp) {
-        Column(Modifier.fillMaxWidth()) {
-            Text(
-                stringResource(R.string.salamtv_out_of_time_title),   // ①
-                style = MaterialTheme.typography.titleLarge,
-                color = colors.onSurface,
-            )
-            Spacer(Modifier.height(10.dp))
-            Text(
-                stringResource(R.string.salamtv_out_of_time_body),    // ②③
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.onSurfaceVariant,
-            )
-            /* جهة التفعيل من اللوحة، حرفيّاً كما كُتبت — المشغّل يقرّر الصيغة
-               (رقم بلا +، معرّف تيليجرام…) لا التطبيق. فارغة = لا سطر. */
-            if (contact.isNotBlank()) {
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    stringResource(R.string.salamtv_out_of_time_contact, contact),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = colors.onSurface,
-                )
-            }
-            Spacer(Modifier.height(20.dp))
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End),
-            ) {
-                OwnTVButton(stringResource(R.string.salamtv_out_of_time_ok), onClick = onDismiss)
-            }
-        }
-    }
+    tv.own.owntv.features.salamtv.SalamTVNoticeDialog(
+        emoji = "⏳",
+        title = stringResource(R.string.salamtv_out_of_time_title),   // ①
+        body = stringResource(R.string.salamtv_out_of_time_body),     // ②③
+        contact = contact,
+        onDismiss = onDismiss,
+    )
 }

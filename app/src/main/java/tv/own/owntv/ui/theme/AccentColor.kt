@@ -15,6 +15,7 @@ import tv.own.owntv.core.theme.roles
  */
 val AccentColor.labelRes: Int
     @StringRes get() = when (this) {
+        AccentColor.CRIMSON -> R.string.settings_accent_crimson
         AccentColor.TEAL -> R.string.settings_accent_teal
         AccentColor.BLUE -> R.string.settings_accent_blue
         AccentColor.VIOLET -> R.string.settings_accent_violet

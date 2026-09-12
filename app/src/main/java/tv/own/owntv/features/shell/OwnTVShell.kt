@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.produceState
@@ -894,7 +895,14 @@ fun OwnTVShell(
                     } else null,
                     leadingExtension = Dimens.SidebarWidthCollapsed,
                 )
-                Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(start = 0.dp, end = 6.dp, bottom = 6.dp)) {
+                /* ④ انتقال بين الأقسام: الشاشة الداخلة تتلاشى وتصعد قليلاً.
+                   لا AnimatedContent عمداً — كانت ستُركّب القسمين معاً لحظةً، وشاشة
+                   البثّ تطلق معاينةً وتركيزاً عند تركيبها. هنا تُركَّب واحدة فقط. */
+                val sectionAnimOff = tv.own.owntv.ui.theme.LocalAnimationLevel.current == tv.own.owntv.core.theme.AnimationLevel.OFF
+                val sectionAlpha = remember(selectedSection) { androidx.compose.animation.core.Animatable(if (sectionAnimOff) 1f else 0f) }
+                LaunchedEffect(selectedSection) { sectionAlpha.animateTo(1f, androidx.compose.animation.core.tween(260, easing = androidx.compose.animation.core.FastOutSlowInEasing)) }
+                Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(start = 0.dp, end = 6.dp, bottom = 6.dp)
+                    .graphicsLayer { alpha = sectionAlpha.value; translationY = (1f - sectionAlpha.value) * 12.dp.toPx() }) {
                     when {
                         selectedSection == MainSection.SETTINGS -> SettingsScreen(
                             themeMode = themeMode,

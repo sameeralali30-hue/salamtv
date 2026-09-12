@@ -62,6 +62,7 @@
 1	json	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	spot_id
 1	json	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	uid
 1	json	app/src/main/java/tv/own/owntv/features/adverts/AdvertReporter.kt	watched_ms
+1	technical	app/src/main/java/tv/own/owntv/features/adverts/OutOfTimeDialog.kt	⏳
 2	empty	app/src/main/java/tv/own/owntv/features/customize/BulkRenameDialogs.kt	\0
 1	assertion	app/src/main/java/tv/own/owntv/features/customize/CustomizeItemsViewModel.kt	EPISODE not applicable
 2	assertion	app/src/main/java/tv/own/owntv/features/customize/CustomizeItemsViewModel.kt	EPISODE not applicable to category items
@@ -212,6 +213,10 @@
 1	preference-key	app/src/main/java/tv/own/owntv/features/movies/MoviesScreen.kt	tmdb_details
 1	technical	app/src/main/java/tv/own/owntv/features/movies/MoviesScreen.kt	✓
 4	empty	app/src/main/java/tv/own/owntv/features/profiles/ProfileComponents.kt	\0
+1	log	app/src/main/java/tv/own/owntv/features/salamtv/SalamTVVisuals.kt	aurora
+1	log	app/src/main/java/tv/own/owntv/features/salamtv/SalamTVVisuals.kt	drift
+1	url	app/src/main/java/tv/own/owntv/features/salamtv/SalamTVVisuals.kt	https://wa.me/$digits
+1	log	app/src/main/java/tv/own/owntv/features/salamtv/SalamTVVisuals.kt	slide
 1	empty	app/src/main/java/tv/own/owntv/features/search/SearchScreen.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/features/search/SearchScreen.kt	c${item.row.channel.id}
 1	technical	app/src/main/java/tv/own/owntv/features/search/SearchScreen.kt	heading
