@@ -126,7 +126,7 @@
 1	preference-key	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	remove_history
 1	preference-key	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	rename
 2	technical	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	−
-3	empty	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	\0
+4	empty	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	#$it
 1	technical	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	$label — $reason
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	$reason — gave up after ${ladderBudgetMs.value / 1000}s
@@ -156,6 +156,7 @@
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	exo tune url:
 3	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	exoplayer
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	exoplayer (drm)
+1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	free balance exhausted — refusing to start playback
 4	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	mpv
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	mpv (panel refuses segments)
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	mpv couldn't play it: ${failure.second}
@@ -169,6 +170,7 @@
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	played, then stalled for ${EXO_STALL_HANDOFF_MS / 1000}s without recovering
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	provider refuses ExoPlayer's signed segment URLs
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	showing advert #${decision.spot.id} (${decision.placement})
+1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	showing advert #${decision.spot.id} (${decision.placement}) over vod
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	stalker fullscreen resolve failed '${channel.name}'
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	stalker mpv resolve failed '${channel.name}'
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	stalker preview resolve failed '${channel.name}'

@@ -404,7 +404,13 @@ class ShellViewModel(
         includeStartup: Boolean,
     ): Boolean = when (refresh.mode) {
         PlaylistAutoRefresh.OFF -> false
-        PlaylistAutoRefresh.STARTUP -> includeStartup
+        /* ═══ في نسخة المزوّد لا مزامنة كاملة عند كلّ فتح ═══
+           كان الدخول يسجّل المصدر بـSTARTUP كي يرى المشترك ترقيته فوراً، قبل
+           أن توجد بصمة `rev`. الآن أوّل نبضة عند الفتح تسأل اللوحة عن البصمة
+           (بايتات) وتعيد البناء فقط إن تغيّر شيء — فالمزامنة الكاملة هنا عبءٌ
+           بلا مقابل، ومع آلاف الأفلام والمسلسلات عبءٌ ملموس. يشمل التثبيتات
+           القديمة التي ما زالت تحمل STARTUP. */
+        PlaylistAutoRefresh.STARTUP -> includeStartup && !tv.own.owntv.BuildConfig.SALAMTV_LOCKED
         else -> (now - (lastSyncAt ?: 0L)) >= (refresh.thresholdMs ?: Long.MAX_VALUE)
     }
 

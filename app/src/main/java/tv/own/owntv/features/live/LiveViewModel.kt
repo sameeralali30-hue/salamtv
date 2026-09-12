@@ -1312,6 +1312,7 @@ class LiveViewModel(
            وبعد تحويلة المشغّل الخارجيّ (مشغّلٌ آخر لا يعرض إعلاننا)، وقبل أن
            يُلمس أيّ محرّك بثّ. */
         if (!runAdvertIfDue(pid, channel, reason)) return
+        if (!freeBalanceAllows(pid)) { _outOfTime.value = true; return }
 
         _previewChannel.value = channel
         clearTimeshift() // normal live = not timeshifted
@@ -1481,6 +1482,7 @@ class LiveViewModel(
             }
         }
         startPaidMidRollTimer()
+        startVodPreRoll()
     }
 
     /* ═══════════════ المدفوع: إعلانٌ وسطيّ كلّ فترة ═══════════════ */
@@ -1525,6 +1527,12 @@ class LiveViewModel(
     }
 
     private suspend fun paidMidRoll(pid: Long) {
+        if (vodActive) {
+            val d = vodDecide(pid, tv.own.owntv.core.adverts.Placement.MID_ROLL) ?: return
+            vodShowAdvert(d, pid)
+            vodResume()
+            return
+        }
         val channel = _previewChannel.value ?: return
         val categoryRemote = channel.categoryId?.let { categoryDao.getById(it)?.remoteId }
         val decision = runCatching {
@@ -1553,6 +1561,7 @@ class LiveViewModel(
      *   يعرض إعلاناً، فيظنّ المشاهد أنّ القناة انقطعت ثمّ فوجئ بإعلان.
      */
     private suspend fun outOfMinutes(pid: Long) {
+        if (vodActive) { vodOutOfMinutes(pid); return }
         val channel = _previewChannel.value ?: return
         val categoryRemote = channel.categoryId?.let { categoryDao.getById(it)?.remoteId }
 
@@ -1585,6 +1594,109 @@ class LiveViewModel(
             previewEngine.stop()
             player.stop()
             _outOfTime.value = true
+        }
+    }
+
+    /* ═══════════════ الأفلام والحلقات: نفس الإعلانات، بلا إسقاط الصورة ═══════════════ */
+
+    /**
+     * صندوق المشغّل واحد للبثّ والأفلام، و[player] هو من يشغّل الفيلم أو الحلقة.
+     * فالعدّادان أعلاه (المجّانيّ والمدفوع) يعدّان دقائق الفيلم أصلاً — لكنّهما
+     * كانا يصلان إلى «لا قناة» فيصمتان. هنا الفرع الذي ينقصهما، وفوقه إعلانُ
+     * البداية عند كلّ فيلمٍ أو حلقة جديدة.
+     *
+     * ⚠ الفيلم يُوقَف مؤقّتاً ولا يُسقَط ([showAdvert] تُسقط البثّ لأنّه يُعاد
+     *   من جديد بلا خسارة؛ الفيلم له موضعٌ يجب أن يعود إليه). والاستهداف
+     *   بقناة/فئة لا يطابق هنا — إعلانات «الكلّ» وحدها، كإعلان فتح التطبيق.
+     */
+    private val vodActive: Boolean
+        get() = !player.isLiveContent && player.currentMeta.value.contentKey != null
+
+    private suspend fun vodDecide(
+        pid: Long,
+        placement: tv.own.owntv.core.adverts.Placement,
+    ): tv.own.owntv.core.adverts.AdvertDecision? = runCatching {
+        adverts.gate.decide(
+            pid, "", null, tv.own.owntv.core.adverts.TuneReason.DIRECT,
+            channelName = player.currentMeta.value.title.orEmpty(), placement = placement,
+        )
+    }.getOrNull()
+
+    /**
+     * المجّانيّ برصيدٍ صفر لا يبدأ شيئاً بلا إعلان.
+     *
+     * ⚠ كان الفحص في العدّاد وحده — كلّ دقيقة. فمن نفد رصيده خرج من التطبيق
+     *   وعاد فحصل على دقيقةٍ كاملة قبل أن يلاحظه العدّاد، وكرّرها ما شاء.
+     *   وإعلان البداية لا يُغني: إن لم يتوفّر (فاصل، سقف، لا ملفّ) بدأت
+     *   القناة كأنّ شيئاً لم يكن. هنا يُقرأ الرصيد من القاعدة لحظة الفتح:
+     *   صفرٌ بلا إعلانٍ اكتمل للتوّ = لا صورة، ورسالة «انتهى وقتك».
+     */
+    private suspend fun freeBalanceAllows(pid: Long): Boolean {
+        if (!adverts.ledger.applies) return true
+        val left = runCatching { adverts.ledger.refresh(pid) }.getOrDefault(1)
+        if (left > 0) return true
+        Log.i(ADVERT_TAG, "free balance exhausted — refusing to start playback")
+        return false
+    }
+
+    private fun vodPause() { if (player.isPlaying.value) player.togglePlayPause() }
+    private fun vodResume() { if (vodActive && !player.isPlaying.value) player.togglePlayPause() }
+
+    private suspend fun vodShowAdvert(
+        decision: tv.own.owntv.core.adverts.AdvertDecision,
+        pid: Long,
+    ): tv.own.owntv.core.adverts.AdvertOutcome {
+        vodPause()
+        adverts.gate.begin(decision, pid)
+        val waiter = kotlinx.coroutines.CompletableDeferred<Pair<tv.own.owntv.core.adverts.AdvertOutcome, Long>>()
+        advertOutcome = waiter
+        _advert.value = decision
+        Log.i(ADVERT_TAG, "showing advert #${decision.spot.id} (${decision.placement}) over vod")
+        val (outcome, watchedMs) = try { waiter.await() } finally { _advert.value = null; advertOutcome = null }
+        runCatching { adverts.gate.finish(decision.eventUid, outcome, watchedMs) }
+        if (outcome == tv.own.owntv.core.adverts.AdvertOutcome.COMPLETED &&
+            decision.spot.grantMinutes > 0 && adverts.ledger.applies
+        ) {
+            runCatching { adverts.ledger.grant(pid, decision.spot.grantMinutes) }
+        }
+        return outcome
+    }
+
+    /** المجّانيّ نفد رصيده أثناء فيلم: إعلانٌ يشتري المزيد، وإلّا يتوقّف الفيلم. */
+    private suspend fun vodOutOfMinutes(pid: Long) {
+        val d = vodDecide(pid, tv.own.owntv.core.adverts.Placement.MID_ROLL)
+        if (d == null) { vodPause(); _outOfTime.value = true; return }
+        val outcome = vodShowAdvert(d, pid)
+        if (outcome == tv.own.owntv.core.adverts.AdvertOutcome.COMPLETED && adverts.ledger.balance.value > 0) vodResume()
+        else { vodPause(); _outOfTime.value = true }
+    }
+
+    /**
+     * إعلان البداية: مع كلّ فيلمٍ أو حلقةٍ جديدة (تبدّل [MediaMeta.contentKey])
+     * ننتظر أوّل صورة ثمّ نوقف ونعرض ثمّ نستأنف. الانتظار مقصود: الإيقاف قبل
+     * أن يبدأ الملفّ لا يثبت على كلّ المحرّكات.
+     */
+    private fun startVodPreRoll() {
+        if (!tv.own.owntv.BuildConfig.SALAMTV_ADVERTS) return
+        viewModelScope.launch {
+            player.currentMeta.map { it.contentKey }.distinctUntilChanged().collect { key ->
+                if (key == null || player.isLiveContent || _advert.value != null) return@collect
+                val pid = currentProfileId() ?: return@collect
+                val d = vodDecide(pid, tv.own.owntv.core.adverts.Placement.ON_TUNE)
+                if (d == null) {
+                    // لا إعلان بداية: المجّانيّ بلا رصيد لا يشاهد شيئاً
+                    if (!freeBalanceAllows(pid)) {
+                        kotlinx.coroutines.withTimeoutOrNull(15_000L) { player.isPlaying.first { it } }
+                        vodPause(); _outOfTime.value = true
+                    }
+                    return@collect
+                }
+                kotlinx.coroutines.withTimeoutOrNull(15_000L) { player.isPlaying.first { it } } ?: return@collect
+                if (player.currentMeta.value.contentKey != key) return@collect   // بدّل قبل أن تبدأ الصورة
+                val outcome = vodShowAdvert(d, pid)
+                if (outcome == tv.own.owntv.core.adverts.AdvertOutcome.COMPLETED || freeBalanceAllows(pid)) vodResume()
+                else { vodPause(); _outOfTime.value = true }
+            }
         }
     }
 
