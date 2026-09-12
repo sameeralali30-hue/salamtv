@@ -124,6 +124,17 @@ fun SubscriberAccountDialog(
                             status.daysLeft.toString()
                         },
                     )
+                    /* جهة التواصل: من اللوحة أوّلاً (تتبدّل بلا إصدار)، وإلّا رقم البناء.
+                       تظهر دائماً — التجديد والترقية يحتاجانها كما يحتاجها الانتهاء. */
+                    val contact = status.contact.ifBlank { tv.own.owntv.BuildConfig.SALAMTV_WHATSAPP }
+                    if (contact.isNotBlank()) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            stringResource(R.string.salamtv_account_contact, contact),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.primary,
+                        )
+                    }
                 }
             }
 

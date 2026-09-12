@@ -285,6 +285,8 @@ class SubscriberLoginClient(
          *   كلفةٌ لا علاقة لها بالسبب.
          */
         val advRev: String,
+        /** جهة التواصل من اللوحة (رقم كما كتبه المشغّل) — فارغة = لا سطر. */
+        val contact: String = "",
     )
 
     suspend fun account(username: String, password: String): Status? = withContext(Dispatchers.IO) {
@@ -318,6 +320,7 @@ class SubscriberLoginClient(
                     subEnd = j.optLong("sub_end").takeIf { it > 0 },
                     pollSeconds = j.optInt("poll", 0),
                     advRev = j.optString("adv_rev"),
+                    contact = j.optString("contact").trim().take(60),
                 )
             }
         }.getOrElse {

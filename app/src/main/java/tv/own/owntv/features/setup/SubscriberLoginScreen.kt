@@ -224,6 +224,16 @@ fun SubscriberLoginScreen(
                 color = colors.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+            // قبل الدخول لا لوحة تُسأل — رقم البناء هو المتاح
+            if (tv.own.owntv.BuildConfig.SALAMTV_WHATSAPP.isNotBlank()) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    stringResource(R.string.salamtv_login_contact, tv.own.owntv.BuildConfig.SALAMTV_WHATSAPP),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.primary,
+                    textAlign = TextAlign.Center,
+                )
+            }
             }
         }
     }

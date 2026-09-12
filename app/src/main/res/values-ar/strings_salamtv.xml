@@ -57,6 +57,8 @@
     <!-- ══ الباقة المجّانيّة ══ -->
     <string name="salamtv_out_of_time_title">انتهى وقتك المجّانيّ اليوم</string>
     <string name="salamtv_out_of_time_body">استهلكت وقت المشاهدة المجّانيّ لهذا اليوم. يعود غداً — أو فعّل اشتراكاً مدفوعاً لمشاهدة بلا حدّ.</string>
+    <string name="salamtv_account_contact">للتجديد أو الترقية تواصل معنا: %1$s</string>
+    <string name="salamtv_login_contact">للاشتراك: %1$s</string>
     <string name="salamtv_out_of_time_contact">لتفعيل الاشتراك تواصل معنا: %1$s</string>
     <string name="salamtv_out_of_time_ok">حسناً</string>
     <string name="salamtv_minutes_left">يتبقّى %1$d دقيقة اليوم</string>
