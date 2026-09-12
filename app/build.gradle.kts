@@ -97,7 +97,7 @@ android {
         // not a code edit.
         val loginUrl = System.getenv("SALAMTV_LOGIN_URL")
             ?: providers.gradleProperty("salamtv.loginUrl").orNull
-            ?: "https://salamtv4.mohamedalalichatbot.xyz/iptv/app_login.php"
+            ?: "https://app.mohamedalalichatbot.xyz/iptv/app_login.php"
         buildConfigField("String", "SALAMTV_LOGIN_URL", "\"$loginUrl\"")
 
         // ── SalamTV: in-app updates ──
@@ -107,7 +107,7 @@ android {
         // link on our own domain.
         val updateUrl = System.getenv("SALAMTV_UPDATE_URL")
             ?: providers.gradleProperty("salamtv.updateUrl").orNull
-            ?: "https://salamtv4.mohamedalalichatbot.xyz/iptv/app-update"
+            ?: "https://app.mohamedalalichatbot.xyz/iptv/app-update"
         buildConfigField("String", "SALAMTV_UPDATE_URL", "\"$updateUrl\"")
 
         // ── SalamTV: identity shown in About ──
