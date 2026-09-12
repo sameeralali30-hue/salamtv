@@ -52,6 +52,8 @@ fun RedeemDialog(
     succeeded: Boolean,
     /** عطل نقل لا رفض — نصّه من الموارد لأنّ اللوحة لم تُجب. */
     offline: Boolean = false,
+    /** وضع كود الخصم: عناوين مختلفة، نفس الآليّة. */
+    promoMode: Boolean = false,
     /**
      * هل تُعرض حقول الحساب؟
      *
@@ -79,13 +81,13 @@ fun RedeemDialog(
     tv.own.owntv.features.profiles.ProfileScrim(onDismiss = onDismiss, width = 420.dp) {
         Column(Modifier.fillMaxWidth()) {
             Text(
-                stringResource(R.string.salamtv_redeem_title),
+                stringResource(if (promoMode) R.string.salamtv_promo_title else R.string.salamtv_redeem_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.onSurface,
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                stringResource(R.string.salamtv_redeem_hint),
+                stringResource(if (promoMode) R.string.salamtv_promo_hint else R.string.salamtv_redeem_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
@@ -111,7 +113,7 @@ fun RedeemDialog(
                 code,
                 // ③ نُصلح ما يفسده النسخ بدل أن نرفضه
                 { code = it.uppercase().filter { c -> !c.isWhitespace() } },
-                label = stringResource(R.string.salamtv_redeem_field),
+                label = stringResource(if (promoMode) R.string.salamtv_promo_field else R.string.salamtv_redeem_field),
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -140,7 +142,7 @@ fun RedeemDialog(
                 Spacer(Modifier.width(2.dp))
                 OwnTVButton(
                     stringResource(
-                        if (busy) R.string.salamtv_redeem_working else R.string.salamtv_redeem_action,
+                        if (busy) R.string.salamtv_redeem_working else if (promoMode) R.string.salamtv_promo_action else R.string.salamtv_redeem_action,
                     ),
                     onClick = { if (canSubmit) onSubmit(user.trim(), pass, code.trim()) },
                     enabled = canSubmit,

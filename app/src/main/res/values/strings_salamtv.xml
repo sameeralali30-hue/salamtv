@@ -84,6 +84,12 @@
     <string name="salamtv_ob4_emoji" translatable="false">✅</string>
     <string name="salamtv_ob4_title">Before you start</string>
     <string name="salamtv_ob4_body">Your subscription is personal: one account, your registered devices only. Sharing or reselling it ends the subscription. By continuing you accept these terms.</string>
+    <string name="salamtv_promo_title">Discount code</string>
+    <string name="salamtv_promo_hint">Got a promo code from a campaign? Enter it here — the discount is applied automatically when your plan is activated, and you will see the exact amount to pay.</string>
+    <string name="salamtv_promo_field">Promo code</string>
+    <string name="salamtv_promo_action">Apply</string>
+    <string name="salamtv_account_due">Amount due</string>
+    <string name="salamtv_account_promo_pending">Pending discount: %1$s — applied on your next activation.</string>
     <string name="salamtv_out_of_time_contact">To activate a subscription, contact us: %1$s</string>
     <string name="salamtv_out_of_time_ok">Got it</string>
     <string name="salamtv_minutes_left">%1$d min left today</string>

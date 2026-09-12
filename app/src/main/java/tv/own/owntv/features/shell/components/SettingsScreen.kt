@@ -313,6 +313,7 @@ fun SettingsScreen(
     var showSignOut by remember { mutableStateOf(false) }
     var showAccount by remember { mutableStateOf(false) }
     var showAccountRedeem by remember { mutableStateOf(false) }
+    var showAccountPromo by remember { mutableStateOf(false) }
     val channelNumbers by settingsVm.directTune.collectAsStateWithLifecycle()
     val quickPinned by settingsVm.quickPinnedKeys.collectAsStateWithLifecycle()
     val catchupTz by settingsVm.catchupTimezone.collectAsStateWithLifecycle()
@@ -1392,6 +1393,7 @@ fun SettingsScreen(
             status = subscription,
             loading = subscription == null,
             onRedeem = { showAccount = false; showAccountRedeem = true },
+            onPromo = { showAccount = false; showAccountPromo = true },
             onSignOut = { showAccount = false; showSignOut = true },
             onDismiss = { showAccount = false },
         )
@@ -1411,6 +1413,22 @@ fun SettingsScreen(
             offline = redeemUi.offline,
             onSubmit = { _, _, code -> settingsVm.redeemFromAccount(code) },
             onDismiss = { settingsVm.clearAccountRedeem(); showAccountRedeem = false },
+        )
+    }
+    if (showAccountPromo) {
+        val promoUi by settingsVm.accountPromo.collectAsStateWithLifecycle()
+        val subscription by settingsVm.subscription.collectAsStateWithLifecycle()
+        tv.own.owntv.features.setup.RedeemDialog(
+            knownUsername = subscription?.username,
+            knownPassword = null,
+            askForAccount = false,
+            promoMode = true,
+            busy = promoUi.busy,
+            message = promoUi.message,
+            succeeded = promoUi.ok,
+            offline = promoUi.offline,
+            onSubmit = { _, _, code -> settingsVm.promoFromAccount(code) },
+            onDismiss = { settingsVm.clearAccountPromo(); showAccountPromo = false },
         )
     }
     if (showSignOut) {

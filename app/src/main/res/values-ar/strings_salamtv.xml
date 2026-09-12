@@ -74,6 +74,12 @@
     <string name="salamtv_ob4_emoji" translatable="false">✅</string>
     <string name="salamtv_ob4_title">قبل أن تبدأ</string>
     <string name="salamtv_ob4_body">اشتراكك شخصيّ: حساب واحد على أجهزتك المسجَّلة فقط. مشاركته أو إعادة بيعه تُنهيه. بالمتابعة أنت توافق على هذه الشروط.</string>
+    <string name="salamtv_promo_title">كود خصم</string>
+    <string name="salamtv_promo_hint">معك كود خصم من حملة؟ أدخله هنا — يُطبَّق تلقائيّاً عند تفعيل باقتك، وسترى المبلغ الذي تدفعه بالضبط.</string>
+    <string name="salamtv_promo_field">كود الخصم</string>
+    <string name="salamtv_promo_action">تطبيق</string>
+    <string name="salamtv_account_due">المبلغ المستحقّ</string>
+    <string name="salamtv_account_promo_pending">خصم معلّق: %1$s — يُطبَّق عند تفعيلك القادم.</string>
     <string name="salamtv_out_of_time_contact">لتفعيل الاشتراك تواصل معنا: %1$s</string>
     <string name="salamtv_out_of_time_ok">حسناً</string>
     <string name="salamtv_minutes_left">يتبقّى %1$d دقيقة اليوم</string>

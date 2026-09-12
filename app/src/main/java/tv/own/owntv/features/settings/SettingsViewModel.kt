@@ -1256,6 +1256,30 @@ class SettingsViewModel(
 
     fun clearAccountRedeem() { _accountRedeem.value = AccountRedeemUi() }
 
+    private val _accountPromo = MutableStateFlow(AccountRedeemUi())
+    val accountPromo: StateFlow<AccountRedeemUi> = _accountPromo.asStateFlow()
+    fun clearAccountPromo() { _accountPromo.value = AccountRedeemUi() }
+
+    /** كود خصم: يُعلَّق على الحساب، ويُطبَّق تلقائيّاً عند تفعيل الوكيل أو الإدارة. */
+    fun promoFromAccount(code: String) {
+        if (_accountPromo.value.busy) return
+        _accountPromo.value = AccountRedeemUi(busy = true)
+        viewModelScope.launch {
+            val creds = activeCredentials()
+            if (creds == null) { _accountPromo.value = AccountRedeemUi(offline = true); return@launch }
+            val (u, p) = creds
+            subscriberLogin.promo(u, p, code)
+                .onSuccess { msg ->
+                    _accountPromo.value = AccountRedeemUi(message = msg, ok = true)
+                    subscriptionWatcher.check(u, p, force = true) { }
+                }
+                .onFailure { e ->
+                    val ex = e as? tv.own.owntv.features.setup.SubscriberLoginClient.LoginException
+                    _accountPromo.value = AccountRedeemUi(message = ex?.message.orEmpty(), offline = ex?.code == tv.own.owntv.features.setup.SubscriberLoginClient.CODE_OFFLINE)
+                }
+        }
+    }
+
     /** بيانات الاشتراك تُقرأ من المصدر — لا نحفظ نسخة ثانية منها. */
     private suspend fun activeCredentials(): Pair<String, String>? {
         val pid = settings.activeProfileId.first()

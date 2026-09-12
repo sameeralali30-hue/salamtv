@@ -142,6 +142,29 @@ class SubscriberLoginClient(
      * تعيد رسالة اللوحة كما هي، نجحت أم فشلت: هي التي تعرف الفرق بين
      * «رمز غير صحيح» و«استعملتَه من قبل»، والتطبيق لا يملك أن يخمّنه.
      */
+    private fun fmtMoney(v: Double): String = if (v == Math.floor(v)) v.toLong().toString() else String.format(java.util.Locale.US, "%.2f", v)
+
+    /** كود خصم: يُعلَّق على الحساب ويُطبَّق عند التفعيل. الردّ نصٌّ جاهز للعرض. */
+    suspend fun promo(username: String, password: String, code: String): Result<String> =
+        withContext(Dispatchers.IO) {
+            val payload = JSONObject().put("username", username).put("password", password).put("code", code).toString().toRequestBody(JSON)
+            val url = BuildConfig.SALAMTV_LOGIN_URL.substringBeforeLast('/') + "/app_promo.php"
+            val request = Request.Builder().url(url).header("Accept", "application/json").post(payload).build()
+            val text = try {
+                client.newCall(request).execute().use { it.body.string() }
+            } catch (e: IOException) {
+                return@withContext Result.failure(LoginException(CODE_OFFLINE, ""))
+            }
+            val json = runCatching { JSONObject(text) }.getOrElse { return@withContext Result.failure(LoginException(CODE_OFFLINE, "")) }
+            if (json.optBoolean("ok")) {
+                val cur = json.optString("currency", "$")
+                Result.success(
+                    json.optString("code") + " · −" + json.optDouble("discount_pct", 0.0).toInt() + "%" +
+                        (if (json.optString("plan_name").isNotBlank()) " · " + json.optString("plan_name") + " · " + fmtMoney(json.optDouble("price_after", 0.0)) + " " + cur + " (" + fmtMoney(json.optDouble("price_before", 0.0)) + ")" else ""),
+                )
+            } else Result.failure(LoginException("refused", json.optString("message")))
+        }
+
     suspend fun redeem(username: String, password: String, code: String): Result<String> =
         withContext(Dispatchers.IO) {
             val payload = JSONObject()
@@ -287,6 +310,10 @@ class SubscriberLoginClient(
         val advRev: String,
         /** جهة التواصل من اللوحة (رقم كما كتبه المشغّل) — فارغة = لا سطر. */
         val contact: String = "",
+        /** كود خصم معلّق — نصّ جاهز للعرض كما صاغته اللوحة، أو فارغ. */
+        val promoText: String = "",
+        /** آخر مبلغ مستحقّ سُجّل عند التفعيل (بعد الخصم إن وُجد)، أو فارغ. */
+        val dueText: String = "",
     )
 
     suspend fun account(username: String, password: String): Status? = withContext(Dispatchers.IO) {
@@ -321,6 +348,19 @@ class SubscriberLoginClient(
                     pollSeconds = j.optInt("poll", 0),
                     advRev = j.optString("adv_rev"),
                     contact = j.optString("contact").trim().take(60),
+                    promoText = j.optJSONObject("promo")?.let { p ->
+                        val cur = p.optString("currency", "$")
+                        buildString {
+                            append(p.optString("code")).append(" · −").append(p.optDouble("discount_pct", 0.0).toInt()).append('%')
+                            if (p.optString("plan_name").isNotBlank()) append(" · ").append(p.optString("plan_name"))
+                                .append(" · ").append(fmtMoney(p.optDouble("price_after", 0.0))).append(' ').append(cur)
+                                .append(" (").append(fmtMoney(p.optDouble("price_before", 0.0))).append(')')
+                        }
+                    }.orEmpty(),
+                    dueText = j.optJSONObject("price_due")?.let { d ->
+                        fmtMoney(d.optDouble("amount", 0.0)) + " " + d.optString("currency", "$") +
+                            d.optString("note").takeIf { it.isNotBlank() }?.let { " — $it" }.orEmpty()
+                    }.orEmpty(),
                 )
             }
         }.getOrElse {

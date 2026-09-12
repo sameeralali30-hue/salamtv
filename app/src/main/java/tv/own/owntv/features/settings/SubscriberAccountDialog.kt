@@ -56,6 +56,7 @@ fun SubscriberAccountDialog(
     /** لم يصل ردٌّ بعد ولا حالة محفوظة. */
     loading: Boolean,
     onRedeem: () -> Unit,
+    onPromo: () -> Unit = {},
     onSignOut: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -124,6 +125,17 @@ fun SubscriberAccountDialog(
                             status.daysLeft.toString()
                         },
                     )
+                    if (status.dueText.isNotBlank()) {
+                        AccountLine(stringResource(R.string.salamtv_account_due), status.dueText)
+                    }
+                    if (status.promoText.isNotBlank()) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            stringResource(R.string.salamtv_account_promo_pending, status.promoText),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.tertiary,
+                        )
+                    }
                     /* جهة التواصل: من اللوحة أوّلاً (تتبدّل بلا إصدار)، وإلّا رقم البناء.
                        تظهر دائماً — التجديد والترقية يحتاجانها كما يحتاجها الانتهاء. */
                     val contact = status.contact.ifBlank { tv.own.owntv.BuildConfig.SALAMTV_WHATSAPP }
@@ -151,6 +163,11 @@ fun SubscriberAccountDialog(
                 OwnTVButton(
                     stringResource(R.string.salamtv_redeem_title),
                     onClick = onRedeem,
+                )
+                OwnTVButton(
+                    stringResource(R.string.salamtv_promo_title),
+                    onClick = onPromo,
+                    style = OwnTVButtonStyle.SECONDARY,
                 )
                 OwnTVButton(
                     stringResource(R.string.salamtv_sign_out),
