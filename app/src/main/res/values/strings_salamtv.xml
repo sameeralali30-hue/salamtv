@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    SalamTV subscriber sign-in. App-module strings on purpose: this screen exists only in the
+    SalamTV+ subscriber sign-in. App-module strings on purpose: this screen exists only in the
     operator build, and core stays the generic player.
 
     Business wording (expired / suspended / wrong password) is NOT here — it comes from the panel
