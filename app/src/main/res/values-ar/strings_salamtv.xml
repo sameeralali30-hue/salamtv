@@ -121,6 +121,10 @@
     <string name="phone_account_redeem">رمز التفعيل</string>
     <string name="phone_account_redeem_desc">أدخل رمزاً من موزّعك للتفعيل أو التجديد</string>
     <string name="phone_account_promo">كود خصم</string>
+    <string name="salamtv_stream_quality">جودة البثّ</string>
+    <string name="salamtv_stream_quality_desc">القنوات والأفلام تصلك بهذه الجودة. «تلقائيّ» يختار 360p — الأأمن على الإنترنت الضعيف؛ ارفعها إن كانت شبكتك تحتمل.</string>
+    <string name="salamtv_stream_quality_auto">تلقائيّ (360p)</string>
+    <string name="salamtv_stream_quality_p">%1$dp</string>
     <string name="phone_account_settings">كلّ الإعدادات</string>
     <string name="phone_account_settings_desc">المشغّل، الترجمة، المظهر، الدليل، التنزيلات وغيرها</string>
     <string name="phone_account_whatsapp">تواصل عبر واتساب</string>

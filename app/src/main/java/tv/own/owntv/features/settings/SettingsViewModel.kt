@@ -659,6 +659,9 @@ class SettingsViewModel(
     fun setPreferredAudioLang(lang: String) { viewModelScope.launch { settings.setPreferredAudioLang(lang) } }
 
     val preferredSubLang: StateFlow<String> = settings.preferredSubLang.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+    /** [SALAMTV] Stream quality: 0 = auto, else a rung height. */
+    val streamQuality: StateFlow<Int> = settings.streamQuality.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+    fun setStreamQuality(height: Int) { viewModelScope.launch { settings.setStreamQuality(height) } }
     fun setPreferredSubLang(lang: String) { viewModelScope.launch { settings.setPreferredSubLang(lang) } }
 
     /** OpenSubtitles search language filter — off (the default) means results come back in every language. */

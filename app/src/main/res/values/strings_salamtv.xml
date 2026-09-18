@@ -133,6 +133,10 @@
     <string name="phone_account_redeem">Activation code</string>
     <string name="phone_account_redeem_desc">Enter a code from your reseller to activate or renew</string>
     <string name="phone_account_promo">Discount code</string>
+    <string name="salamtv_stream_quality">Stream quality</string>
+    <string name="salamtv_stream_quality_desc">Channels and films are served at this quality. Auto picks 360p — the safest on a slow connection; pick higher if your network allows.</string>
+    <string name="salamtv_stream_quality_auto">Auto (360p)</string>
+    <string name="salamtv_stream_quality_p">%1$dp</string>
     <string name="phone_account_settings">All settings</string>
     <string name="phone_account_settings_desc">Player, subtitles, appearance, guide, downloads and more</string>
     <string name="phone_account_whatsapp">Contact on WhatsApp</string>

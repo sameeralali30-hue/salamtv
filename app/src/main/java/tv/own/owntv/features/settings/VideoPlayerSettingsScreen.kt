@@ -87,6 +87,13 @@ import tv.own.owntv.core.theme.AppFontFamily
 import tv.own.owntv.ui.theme.asComposeFamily
 
 // The six sections of this screen, in spine order — the mockup's Video Player Settings model.
+/** [SALAMTV] The ladder the panel offers; 0 = auto. Shown as the "Stream quality" picker. */
+private val STREAM_QUALITY_HEIGHTS = listOf(0, 360, 480, 720, 1080)
+
+@Composable
+private fun streamQualityLabel(h: Int): String =
+    if (h <= 0) stringResource(R.string.salamtv_stream_quality_auto) else stringResource(R.string.salamtv_stream_quality_p, h)
+
 private const val SECTION_ENGINE = 0
 private const val SECTION_LIVE = 1
 private const val SECTION_SOUND = 2
@@ -123,6 +130,7 @@ internal val VIDEO_QUICK_ROWS: List<VideoQuickRef> = listOf(
     VideoQuickRef("vp_reset_zoom", SECTION_ENGINE, OwnTVIcon.ASPECT, R.string.settings_reset_saved_zoom, R.string.settings_reset_saved_zoom_description),
     VideoQuickRef("vp_seek_step", SECTION_ENGINE, OwnTVIcon.FORWARD, R.string.settings_seek_step, R.string.settings_seek_step_description),
     VideoQuickRef("vp_rewind_step", SECTION_ENGINE, OwnTVIcon.REWIND, R.string.settings_live_rewind_step, R.string.settings_live_rewind_step_description),
+    VideoQuickRef("vp_stream_quality", SECTION_LIVE, OwnTVIcon.VIDEO, R.string.salamtv_stream_quality, R.string.salamtv_stream_quality_desc),
     VideoQuickRef("vp_live_preview", SECTION_LIVE, OwnTVIcon.LIVE_TV, R.string.settings_quick_live_preview, R.string.settings_live_preview_description),
     VideoQuickRef("vp_preview_audio", SECTION_LIVE, OwnTVIcon.AUDIO, R.string.settings_preview_audio, R.string.settings_preview_audio_description),
     VideoQuickRef("vp_live_latency", SECTION_LIVE, OwnTVIcon.LIVE_TV, R.string.settings_live_latency, R.string.settings_live_latency_description),
@@ -309,6 +317,10 @@ internal fun videoQuickBinding(key: String, vm: SettingsViewModel): VideoQuickBi
             val code by vm.preferredSubLang.collectAsStateWithLifecycle()
             link(langName(code))
         }
+        "vp_stream_quality" -> {
+            val h by vm.streamQuality.collectAsStateWithLifecycle()
+            link(streamQualityLabel(h))
+        }
         "vp_resume" -> {
             val mode by vm.resumeMode.collectAsStateWithLifecycle()
             link(stringResource(resumeModeLabelRes(mode)))
@@ -450,6 +462,7 @@ fun VideoPlayerSettingsScreen(
     val audioDelay by vm.audioDelayMs.collectAsStateWithLifecycle()
     val audioLang by vm.preferredAudioLang.collectAsStateWithLifecycle()
     val subLang by vm.preferredSubLang.collectAsStateWithLifecycle()
+    val streamQuality by vm.streamQuality.collectAsStateWithLifecycle()
     val resumeMode by vm.resumeMode.collectAsStateWithLifecycle()
     val liveLatency by vm.liveLatencyMode.collectAsStateWithLifecycle()
     val liveCustomSecs by vm.liveLatencyCustomSecs.collectAsStateWithLifecycle()
@@ -943,6 +956,14 @@ fun VideoPlayerSettingsScreen(
             onClick = { savedScroll = scrollState.value; dialog = Dialog.SUB_STYLE },
         )
         Row2(
+            quickKey = "vp_stream_quality",
+            icon = OwnTVIcon.VIDEO, title = stringResource(R.string.salamtv_stream_quality),
+            desc = stringResource(R.string.salamtv_stream_quality_desc),
+            chip = streamQualityLabel(streamQuality), chevron = true,
+            modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.STREAM_QUALITY)),
+            onClick = { savedScroll = scrollState.value; dialog = Dialog.STREAM_QUALITY },
+        )
+        Row2(
             quickKey = "vp_sub_lang",
             icon = OwnTVIcon.SUBTITLE, title = stringResource(R.string.settings_preferred_subtitle_language),
             desc = stringResource(R.string.settings_preferred_language_description),
@@ -1140,6 +1161,13 @@ fun VideoPlayerSettingsScreen(
                 onColor = { vm.setSubtitleColor(it) },
             onPosition = { vm.setSubtitlePosition(it) },
             onBgOpacity = { vm.setSubtitleBgOpacity(it) },
+            onDismiss = { dialog = Dialog.NONE },
+        )
+        Dialog.STREAM_QUALITY -> PickerDialog(
+            title = stringResource(R.string.salamtv_stream_quality),
+            options = STREAM_QUALITY_HEIGHTS.map { it.toString() to streamQualityLabel(it) },
+            selected = streamQuality.toString(),
+            onSelect = { vm.setStreamQuality(it.toInt()); dialog = Dialog.NONE },
             onDismiss = { dialog = Dialog.NONE },
         )
         Dialog.SUB_LANG -> PickerDialog(
@@ -1535,12 +1563,13 @@ private fun dialogForQuickKey(key: String): Dialog? = when (key) {
     "vp_reset_audio_delay" -> Dialog.RESET_SAVED_AUDIO_DELAY
     "vp_sub_style" -> Dialog.SUB_STYLE
     "vp_sub_lang" -> Dialog.SUB_LANG
+    "vp_stream_quality" -> Dialog.STREAM_QUALITY
     "vp_resume" -> Dialog.RESUME
     "vp_mini" -> Dialog.MINI_PLAYER
     else -> null
 }
 
-private enum class Dialog { NONE, LIVE_ENGINE, LIVE_ENGINE_SOURCES, LIVE_ENGINE_SOURCE, LIVE_LATENCY_SOURCES, LIVE_LATENCY_SOURCE, LIVE_LATENCY_CUSTOM_SOURCE, VOD_ENGINE, ZOOM, VOLUME, RESET_SAVED_ZOOM, RESET_SAVED_VOLUME, RESET_SAVED_AUDIO_DELAY, SEEK_STEP, LIVE_REWIND_STEP, SUB_STYLE, SUB_LANG, AUDIO_LANG, AUDIO_SYNC, RESUME, LIVE_LATENCY, LIVE_CUSTOM, LIVE_PREROLL, LIVE_TUNE_TIMEOUT, LIVE_PREROLL_SOURCES, LIVE_PREROLL_SOURCE, EXTERNAL_PLAYER, RESET_PINS, AFR_WARNING, LIVE_PREVIEW_PANEL, MINI_PLAYER }
+private enum class Dialog { NONE, STREAM_QUALITY, LIVE_ENGINE, LIVE_ENGINE_SOURCES, LIVE_ENGINE_SOURCE, LIVE_LATENCY_SOURCES, LIVE_LATENCY_SOURCE, LIVE_LATENCY_CUSTOM_SOURCE, VOD_ENGINE, ZOOM, VOLUME, RESET_SAVED_ZOOM, RESET_SAVED_VOLUME, RESET_SAVED_AUDIO_DELAY, SEEK_STEP, LIVE_REWIND_STEP, SUB_STYLE, SUB_LANG, AUDIO_LANG, AUDIO_SYNC, RESUME, LIVE_LATENCY, LIVE_CUSTOM, LIVE_PREROLL, LIVE_TUNE_TIMEOUT, LIVE_PREROLL_SOURCES, LIVE_PREROLL_SOURCE, EXTERNAL_PLAYER, RESET_PINS, AFR_WARNING, LIVE_PREVIEW_PANEL, MINI_PLAYER }
 
 /**
  * Label for one engine preference — "ExoPlayer, then mpv", "mpv only", and so on.
