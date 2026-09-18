@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -65,6 +64,7 @@ import kotlin.math.abs
 import tv.own.owntv.player.ExoPreviewSurface
 import tv.own.owntv.player.MpvPlaybackEngine
 import tv.own.owntv.player.MpvVideoSurface
+import tv.own.owntv.core.ui.findActivity
 import tv.own.owntv.player.OwnTVPlayer
 import tv.own.owntv.player.PlaybackEngine
 import tv.own.owntv.player.SubtitleOverlay
@@ -128,7 +128,7 @@ fun PhonePlayerScreen(
     // عرضيّاً الفيديو وحده على الشاشة: أشرطة النظام تختفي وتعود بسحبة، وتعود كلّها عند الخروج.
     val view = LocalView.current
     DisposableEffect(landscape) {
-        val window = (view.context as? Activity)?.window
+        val window = view.context.findActivity()?.window
         val ic = window?.let { WindowCompat.getInsetsController(it, view) }
         if (landscape) {
             ic?.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -183,7 +183,7 @@ fun PhonePlayerScreen(
                                                 engine.adjustVolumeByUser(-steps * 3)
                                                 gestureHint = "🔊 " + engine.volume.value + "%"
                                             } else {
-                                                val w = (view.context as? Activity)?.window
+                                                val w = view.context.findActivity()?.window
                                                 if (w != null) {
                                                     val lp = w.attributes
                                                     val cur = if (lp.screenBrightness < 0f) 0.6f else lp.screenBrightness

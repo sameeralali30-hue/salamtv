@@ -20,7 +20,8 @@
     <string name="salamtv_login_help">Accounts are issued by your reseller. Contact them to subscribe or renew.</string>
     <string name="salamtv_sign_out">Sign out</string>
     <string name="salamtv_sign_out_confirm">Sign out of this device? Your channels will be removed until you sign in again.</string>
-    <string name="salamtv_based_on">Based on OwnTV by ahXN00, under GPLv3.</string>
+    <string name="salamtv_developed_by">Developed and operated by SalamTV © %1$d</string>
+    <string name="salamtv_based_on">Built on the open-source OwnTV project (GPLv3).</string>
     <string name="salamtv_support">Support</string>
     <string name="salamtv_support_scan">Scan the code with your phone to open our support channel.</string>
     <string name="salamtv_support_qr">Support channel QR code</string>
@@ -132,6 +133,8 @@
     <string name="phone_account_redeem">Activation code</string>
     <string name="phone_account_redeem_desc">Enter a code from your reseller to activate or renew</string>
     <string name="phone_account_promo">Discount code</string>
+    <string name="phone_account_settings">All settings</string>
+    <string name="phone_account_settings_desc">Player, subtitles, appearance, guide, downloads and more</string>
     <string name="phone_account_whatsapp">Contact on WhatsApp</string>
     <string name="phone_account_sign_out">Sign out</string>
     <string name="phone_account_sign_out_confirm">Sign out of this account on this device?</string>

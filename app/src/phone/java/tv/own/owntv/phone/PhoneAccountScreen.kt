@@ -38,14 +38,15 @@ import tv.own.owntv.ui.theme.OwnTVTheme
 
 /**
  * حسابي: بطاقة الاشتراك في الأعلى، ثمّ الأفعال الثلاثة التي يأتي المشترك من أجلها —
- * رمز التفعيل، واتساب، الخروج — وتحتها التحديث. لا إعدادات هاوٍ (خطوط، ثيمات، محرّكات)؛
- * ما يحتاجه المشترك يُقرَّر من اللوحة (الجودة الافتراضيّة، السقف) ويصله بلا أن يعرف.
+ * رمز التفعيل، واتساب، الخروج — وتحتها التحديث. الإعدادات التفصيليّة (المشغّل، المظهر، الدليل…)
+ * خلف بطاقة واحدة تفتح شاشة الإعدادات الكاملة نفسها التي على التلفاز.
  */
 @Composable
 fun PhoneAccountScreen(
     settingsVm: SettingsViewModel,
     status: SubscriberLoginClient.Status?,
     isOffline: Boolean,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = OwnTVTheme.colors
@@ -87,6 +88,8 @@ fun PhoneAccountScreen(
             PhoneActionCard(OwnTVIcon.SPARKLE, stringResource(R.string.phone_account_redeem), stringResource(R.string.phone_account_redeem_desc), accent = true,
                 onClick = { showRedeem = true })
             PhoneActionCard(OwnTVIcon.STAR, stringResource(R.string.phone_account_promo), null, onClick = { showPromo = true })
+            // كلّ أقسام الإعدادات (نفس شاشة التلفاز): للمشترك الذي يريد التحكّم بالمشغّل والمظهر والدليل.
+            PhoneActionCard(OwnTVIcon.SETTINGS, stringResource(R.string.phone_account_settings), stringResource(R.string.phone_account_settings_desc), onClick = onOpenSettings)
             val number = status?.contact?.ifBlank { BuildConfig.SALAMTV_WHATSAPP } ?: BuildConfig.SALAMTV_WHATSAPP
             if (number.isNotBlank()) {
                 WhatsAppButton(number = number, message = status?.contactText.orEmpty(), style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.fillMaxWidth())

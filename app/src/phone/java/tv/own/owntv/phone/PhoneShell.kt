@@ -1,6 +1,5 @@
 package tv.own.owntv.phone
 
-import android.app.Activity
 import android.content.pm.ActivityInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -42,7 +41,9 @@ import tv.own.owntv.features.live.LiveViewModel
 import tv.own.owntv.features.movies.MovieViewModel
 import tv.own.owntv.features.series.SeriesViewModel
 import tv.own.owntv.features.settings.SettingsViewModel
+import tv.own.owntv.core.ui.findActivity
 import tv.own.owntv.features.shell.ShellArgs
+import tv.own.owntv.features.shell.components.SettingsScreen
 import tv.own.owntv.features.shell.ShellViewModel
 import tv.own.owntv.player.OwnTVPlayer
 import tv.own.owntv.ui.components.OwnTVIcon
@@ -83,13 +84,19 @@ fun PhoneShell(args: ShellArgs, modifier: Modifier = Modifier) {
 
     var tab by rememberSaveable { mutableStateOf(PhoneTab.LIVE) }
     var playing by remember { mutableStateOf<PhonePlaying?>(null) }
+    // شاشة الإعدادات الكاملة فوق التبويبات — تُفتح من «حسابي» وتُغلق بالرجوع.
+    var showSettings by rememberSaveable { mutableStateOf(false) }
     val subscription by shellVm.subscription.collectAsStateWithLifecycle()
 
     // التصفّح عموديّ؛ المشغّل يتبع المستشعر (يدور إلى العرضيّ حين يقلب المشاهد هاتفه).
-    val activity = LocalContext.current as? Activity
-    DisposableEffect(playing != null) {
-        activity?.requestedOrientation = if (playing != null) {
-            ActivityInfo.SCREEN_ORIENTATION_SENSOR
+    // السياق هنا مغلَّف باللغة (AppLocale.wrapForCompose) — ليس Activity مباشرة، فيُفكّ الغلاف.
+    val activity = LocalContext.current.findActivity()
+    // المشغّل عرضيّ دائماً (بالاتّجاهين حسب المستشعر) كما يتوقّع المشاهد من أيّ تطبيق فيديو؛ وشاشة
+    // الإعدادات الكاملة كذلك: تصميمها بعمودين (مجموعات | بنود) صُنع للتلفاز ويختنق في العرض العموديّ.
+    val wide = playing != null || showSettings
+    DisposableEffect(wide) {
+        activity?.requestedOrientation = if (wide) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         } else {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
@@ -131,10 +138,27 @@ fun PhoneShell(args: ShellArgs, modifier: Modifier = Modifier) {
                     )
                     PhoneTab.ACCOUNT -> PhoneAccountScreen(
                         settingsVm = settingsVm, status = subscription, isOffline = args.isOffline,
+                        onOpenSettings = { showSettings = true },
                     )
                 }
             }
             PhoneBottomBar(selected = tab, onSelect = { tab = it })
+        }
+
+        if (showSettings && playing == null) {
+            BackHandler { showSettings = false }
+            Column(Modifier.fillMaxSize().background(colors.background).statusBarsPadding()) {
+                PhoneSettingsTopBar(onBack = { showSettings = false })
+                SettingsScreen(
+                    themeMode = args.themeMode,
+                    uiZoomPercent = args.uiZoomPercent,
+                    onSetZoom = args.onSetZoom,
+                    fontCustomization = args.fontCustomization,
+                    onSetFontCustomization = args.onSetFontCustomization,
+                    onOpenPlaylist = { },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
 
         playing?.let { now ->
@@ -149,6 +173,21 @@ fun PhoneShell(args: ShellArgs, modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxSize(),
             )
         }
+    }
+}
+
+/** شريط علويّ بسيط لشاشة الإعدادات: سهم رجوع وعنوان. */
+@Composable
+private fun PhoneSettingsTopBar(onBack: () -> Unit) {
+    val colors = OwnTVTheme.colors
+    Row(
+        modifier = Modifier.fillMaxWidth().background(colors.surfaceContainer).height(PhoneDimens.BottomBar).padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(48.dp).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
+            OwnTVIcon(OwnTVIcon.BACK, tint = colors.onSurface, modifier = Modifier.size(24.dp))
+        }
+        Text(stringResource(R.string.phone_account_settings), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
     }
 }
 

@@ -2147,12 +2147,18 @@ private fun AboutDialog(onDismiss: () -> Unit) {
             Spacer(Modifier.height(4.dp))
             Text(GITHUB_REPO, style = MaterialTheme.typography.bodyMedium, color = colors.primary)
             Spacer(Modifier.height(16.dp))
-            // Credit upstream by name: this is a fork, GPL-3 asks that the origin stay visible,
-            // and a subscriber reading it should not mistake OwnTV's project for our support desk.
+            // Who made it, first and readable; then the upstream credit in small print — this is a
+            // fork and GPL-3 asks that the origin stay visible, but a subscriber must not mistake
+            // OwnTV's project for our support desk.
+            Text(
+                stringResource(R.string.salamtv_developed_by, java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.onSurface,
+            )
             Spacer(Modifier.height(4.dp))
             Text(
                 stringResource(R.string.salamtv_based_on),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = colors.onSurfaceVariant,
             )
 
