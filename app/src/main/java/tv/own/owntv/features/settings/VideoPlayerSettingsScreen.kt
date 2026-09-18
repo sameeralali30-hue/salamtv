@@ -88,7 +88,7 @@ import tv.own.owntv.ui.theme.asComposeFamily
 
 // The six sections of this screen, in spine order — the mockup's Video Player Settings model.
 /** [SALAMTV] The ladder the panel offers; 0 = auto. Shown as the "Stream quality" picker. */
-private val STREAM_QUALITY_HEIGHTS = listOf(0, 360, 480, 720, 1080)
+private val STREAM_QUALITY_HEIGHTS = listOf(0, 240, 360, 480, 720, 1080)
 
 @Composable
 private fun streamQualityLabel(h: Int): String =
