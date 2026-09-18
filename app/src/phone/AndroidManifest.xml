@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- نكهة الهاتف: أيقونة في الشاشة الرئيسيّة فقط (لا قائمة Leanback) — واجهة اللمس تأتي في هذا المصدر. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- صورة داخل صورة أثناء التشغيل؛ configChanges كي لا يُعاد إنشاء النشاط (والمشغّل) عند الدخول/الخروج والدوران. -->
+        <activity android:name=".MainActivity"
+            android:supportsPictureInPicture="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

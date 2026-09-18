@@ -41,6 +41,7 @@ import java.io.IOException
 class SubscriberLoginClient(
     private val client: OkHttpClient,
     private val clientId: tv.own.owntv.core.metadata.OwnTVClientId,
+    private val localeStore: tv.own.owntv.core.i18n.LocaleStore,
 ) {
 
     /** What the panel answered. [base] is the Xtream source URL to store for this subscriber. */
@@ -73,6 +74,8 @@ class SubscriberLoginClient(
             .put("username", username)
             .put("password", password)
             .put("device_id", installId)
+            .put("app_version", BuildConfig.VERSION_NAME)   // اللوحة تعدّ من لم يحدّث قبل أيّ تغيير كاسر
+            .put("lang", tv.own.owntv.core.i18n.AppLang.code(localeStore))   // اسم الخطّة بلغة الواجهة
             .toString()
             .toRequestBody(JSON)
 
@@ -310,16 +313,24 @@ class SubscriberLoginClient(
         val advRev: String,
         /** جهة التواصل من اللوحة (رقم كما كتبه المشغّل) — فارغة = لا سطر. */
         val contact: String = "",
+        /** رسالة واتساب جاهزة من اللوحة (تشرح الطلب وتحمل اسم المستخدم) — فارغة = بلا نصّ. */
+        val contactText: String = "",
         /** كود خصم معلّق — نصّ جاهز للعرض كما صاغته اللوحة، أو فارغ. */
         val promoText: String = "",
         /** آخر مبلغ مستحقّ سُجّل عند التفعيل (بعد الخصم إن وُجد)، أو فارغ. */
         val dueText: String = "",
+        /** تذكرة رخصة اللوحة الموقَّعة من المركز — فارغة = اللوحة بلا رخصة سارية (انظر [LicenseTicket]). */
+        val licenseTicket: String = "",
     )
 
     suspend fun account(username: String, password: String): Status? = withContext(Dispatchers.IO) {
         val payload = JSONObject()
             .put("username", username)
             .put("password", password)
+            // هويّة الجهاز وإصداره مع كلّ نبضة: اللوحة تحدّث «آخر ظهور» والإصدار لكلّ جهاز لا للحساب فقط
+            .put("device_id", runCatching { clientId.get() }.getOrDefault(""))
+            .put("app_version", BuildConfig.VERSION_NAME)
+            .put("lang", tv.own.owntv.core.i18n.AppLang.code(localeStore))
             .toString()
             .toRequestBody(JSON)
 
@@ -348,6 +359,8 @@ class SubscriberLoginClient(
                     pollSeconds = j.optInt("poll", 0),
                     advRev = j.optString("adv_rev"),
                     contact = j.optString("contact").trim().take(60),
+                    contactText = j.optString("contact_text").trim().take(300),
+                    licenseTicket = j.optString("license_ticket").trim(),
                     promoText = j.optJSONObject("promo")?.let { p ->
                         val cur = p.optString("currency", "$")
                         buildString {

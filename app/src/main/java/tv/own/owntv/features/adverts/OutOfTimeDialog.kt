@@ -21,12 +21,13 @@ import tv.own.owntv.R
  * ═══════════════════════════════════════════════════════════════════════════
  */
 @Composable
-fun OutOfTimeDialog(contact: String, onDismiss: () -> Unit) {
+fun OutOfTimeDialog(contact: String, onDismiss: () -> Unit, contactMessage: String = "") {
     tv.own.owntv.features.salamtv.SalamTVNoticeDialog(
         emoji = "⏳",
         title = stringResource(R.string.salamtv_out_of_time_title),   // ①
         body = stringResource(R.string.salamtv_out_of_time_body),     // ②③
         contact = contact,
+        contactMessage = contactMessage,
         onDismiss = onDismiss,
     )
 }

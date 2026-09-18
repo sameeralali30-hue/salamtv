@@ -150,6 +150,7 @@ fun SubscriberAccountDialog(
                         tv.own.owntv.features.salamtv.WhatsAppButton(
                             contact,
                             style = if (status.active) tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY else tv.own.owntv.ui.components.OwnTVButtonStyle.PRIMARY,
+                            message = status.contactText,
                         )
                     }
                 }

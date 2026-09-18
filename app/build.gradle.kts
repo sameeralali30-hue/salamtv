@@ -57,6 +57,12 @@ android {
         // than any published release and the in-app updater never offers an "update" while developing.
         versionName = System.getenv("VERSION_NAME") ?: "99.99.99"
 
+        // ═══ معماريّتان لا أربع ═══
+        // x86/x86_64 محاكيات لا أجهزة مشتركين، ومكتباتهما (ffmpeg/mpv) ≈ 55 MB من الحزمة —
+        // ملفّ 116 MB على شبكة 150 KB/s لا يصل. الملفّ يبقى واحداً (الهاتف والتلفاز، واتساب،
+        // بلوتوث) بلا تخمين معماريّة، فقط أخفّ بنحو 40%. للمحاكي: احذف السطر مؤقّتاً.
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
+
         // Opt-in local diagnostic APKs keep the rolling playback trace enabled even when they are
         // release-signed (so they can update an installed production build without changing its data).
         buildConfigField(
@@ -165,8 +171,21 @@ android {
     //    التطبيق باسم الحزمة ومفتاح التوقيع، فاختلاف أيّهما يعني أنّ نسخة
     //    الموقع تبقى «تطبيقاً مجهولاً» حتى بعد نشر نسخة المتجر — وهو الهدف
     //    الذي نشر على المتجر من أجله.
-    flavorDimensions += "dist"
+    // ═══ [SALAMTV] ملفّان لا ملفّ: «form» = tv | phone ═══
+    // قرار المالك: واجهة الهاتف تُبنى مستقلّة وتُوزَّع ملفّاً مستقلّاً، وكلّ إصدار يُخرج الاثنين
+    // (tools/build-apks.sh). المعرّف والتوقيع واحد فيهما فلا يحتاج المشترك حذفاً وإعادة تثبيت،
+    // والمحدّث الداخليّ يطلب نسخة جهازه (DeviceForm) لا نسخة الملفّ الذي يعمل عليه — فهاتفٌ على
+    // نسخة التلفاز ينتقل إلى نسخة الهاتف مع أوّل تحديث.
+    flavorDimensions += listOf("form", "dist")
     productFlavors {
+        create("tv") {
+            dimension = "form"
+            buildConfigField("String", "SALAMTV_FORM", "\"tv\"")
+        }
+        create("phone") {
+            dimension = "form"
+            buildConfigField("String", "SALAMTV_FORM", "\"phone\"")
+        }
         create("site") {
             dimension = "dist"
             buildConfigField("boolean", "SALAMTV_SELF_UPDATE", "true")

@@ -213,6 +213,7 @@
 1	preference-key	app/src/main/java/tv/own/owntv/features/movies/MoviesScreen.kt	tmdb_details
 1	technical	app/src/main/java/tv/own/owntv/features/movies/MoviesScreen.kt	✓
 4	empty	app/src/main/java/tv/own/owntv/features/profiles/ProfileComponents.kt	\0
+1	uri	app/src/main/java/tv/own/owntv/features/salamtv/SalamTVVisuals.kt	?text=
 1	log	app/src/main/java/tv/own/owntv/features/salamtv/SalamTVVisuals.kt	aurora
 1	log	app/src/main/java/tv/own/owntv/features/salamtv/SalamTVVisuals.kt	drift
 1	url	app/src/main/java/tv/own/owntv/features/salamtv/SalamTVVisuals.kt	https://wa.me/$digits
@@ -491,7 +492,8 @@
 1	url	app/src/main/java/tv/own/owntv/features/setup/SetupViewModel.kt	/xmltv.php?username=
 2	url	app/src/main/java/tv/own/owntv/features/setup/SetupViewModel.kt	UTF-8
 1	empty	app/src/main/java/tv/own/owntv/features/setup/SetupWizard.kt	\0
-19	empty	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	\0
+1	technical	app/src/main/java/tv/own/owntv/features/setup/SetupWizard.kt	phone
+20	empty	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	\0
 3	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	$
 1	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	%
 1	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	%.2f
@@ -511,12 +513,14 @@
 1	url	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	app_device_reset.php
 2	url	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	app_login.php
 1	url	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	app_logout.php
+2	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	app_version
 10	protocol	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	application/json
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	balance_minutes
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	base
 5	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	code
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	consumed_minutes
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	contact
+1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	contact_text
 3	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	currency
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	days_left
 3	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	device_id
@@ -526,6 +530,8 @@
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	error
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	events
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	exp_date
+2	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	lang
+1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	license_ticket
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	login ok
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	login refused: $code
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	login transport failure: ${e.javaClass.simpleName}
@@ -561,13 +567,16 @@
 4	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	·
 2	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	· −
 1	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	— $it
+1	empty	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	\0
 2	preference-key	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	:
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	SalamTVWatch
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	check inconclusive; leaving revision as-is
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	first revision recorded
+1	preference-key	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	license_ticket
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	no change
 1	preference-key	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	rev
 1	preference-key	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	salamtv_subscription
+1	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	|
 5	empty	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	\0
 2	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	Action
 1	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	All Channels
@@ -654,6 +663,7 @@
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	group_playback
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	group_profile
 5	preference-key	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	group_quick
+1	preference-key	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	group_salamtv
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	group_sources
 2	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	jpeg
 2	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	jpg
@@ -667,6 +677,7 @@
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	quick_live_preview
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	quick_preview_sound
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	salamtv_account
+1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	salamtv_redeem
 1	preference-key	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	spine_foot
 1	preference-key	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	spine_head
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	tab_

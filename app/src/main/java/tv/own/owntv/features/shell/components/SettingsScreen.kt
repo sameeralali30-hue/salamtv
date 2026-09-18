@@ -202,6 +202,9 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     openEpgAdd: Boolean = false,
     onEpgAddConsumed: () -> Unit = {},
+    /** [SALAMTV] Open «My account» on arrival — the rail's Subscription item lands here. */
+    openAccount: Boolean = false,
+    onAccountConsumed: () -> Unit = {},
 ) {
     // A cross-script language change recreates the Activity so Android can apply the new script's
     // shaping and font fallback. Keep the open settings sub-screen across that configuration change
@@ -414,6 +417,9 @@ fun SettingsScreen(
     // Opening a sub-screen the ordinary way cancels any pending Quick-shortcut return, or the Back
     // from it would aim at the shortcut instead of the row just used.
     val open: (SettingsTab) -> Unit = { lastTab = it; deepReturnKey = null; videoSection = null; videoRowKey = null; tab = it }
+    LaunchedEffect(openAccount) {
+        if (openAccount) { settingsVm.refreshSubscription(); showAccount = true; onAccountConsumed() }
+    }
     LaunchedEffect(openEpgAdd) {
         if (openEpgAdd) { consumeEpgAdd = true; open(SettingsTab.EPG); onEpgAddConsumed() }
     }
@@ -510,6 +516,29 @@ fun SettingsScreen(
             chip = stringResource(if (updateCheckOnStart) R.string.common_on else R.string.common_off),
             chipTone = if (updateCheckOnStart) TileTone.PRIMARY else TileTone.SECONDARY,
             onClick = { settingsVm.setUpdateCheckOnStart(!updateCheckOnStart) },
+        ),
+        )),
+        /* اشتراك المشترك — مجموعة أولى بذاتها، فوق «الملف الشخصي».
+           كان «حسابي» صفّاً في آخر مجموعة (التطبيق)، وعلى التلفاز — حيث القائمة
+           عمود مجموعات ينتهي عند حافة الشاشة — لم يجده أحد ("لا يوجد القسم
+           إطلاقاً"). من اشترى رمزاً يريد إدخاله في أوّل ما تقع عليه عينه، لا في
+           آخر ما يصل إليه إبهامه. رمز التفعيل صفّ مباشر لا يمرّ ببطاقة الحساب. */
+        *(if (!tv.own.owntv.BuildConfig.SALAMTV_LOCKED) emptyArray() else arrayOf(
+        RootGroup("group_salamtv", stringResource(R.string.salamtv_subscription_group), OwnTVIcon.PERSON, stringResource(R.string.salamtv_subscription_group_desc)),
+        RootRow(
+            "salamtv_redeem", TileTone.PRIMARY, OwnTVIcon.SPARKLE,
+            title = stringResource(R.string.salamtv_redeem_title),
+            desc = stringResource(R.string.salamtv_redeem_row_desc),
+            onClick = { showAccountRedeem = true },
+        ),
+        RootRow(
+            "salamtv_account", TileTone.SECONDARY, OwnTVIcon.PERSON,
+            title = stringResource(R.string.salamtv_account),
+            desc = stringResource(R.string.salamtv_account_desc),
+            // ⚠ كان هذا الصفّ «تسجيل خروج» وحده. فمن أراد أن يعرف متى ينتهي
+            //   اشتراكه لم يجد أين، ومن اشترى رمز تجديد لم يجد أين يُدخله إلا
+            //   بعد أن يخرج — وهو آخر ما يخطر ببال من يريد أن يدفع لنا.
+            onClick = { settingsVm.refreshSubscription(); showAccount = true },
         ),
         )),
         RootGroup("group_profile", stringResource(R.string.settings_profile_group), OwnTVIcon.PERSON, stringResource(R.string.settings_group_summary_profile)),
@@ -794,22 +823,6 @@ fun SettingsScreen(
             chip = if (updateCheckOnStart) stringResource(R.string.common_on) else stringResource(R.string.common_off),
             chipTone = if (updateCheckOnStart) TileTone.PRIMARY else TileTone.SECONDARY,
             onClick = { settingsVm.setUpdateCheckOnStart(!updateCheckOnStart) },
-        ),
-        )),
-        /* خروج المشترك — في المستوى الأول لا داخل «قوائم التشغيل».
-           من لا يعرف أنّ اشتراكه «مصدر» لن يفتح تلك الشاشة أبداً، وقد كان
-           يمسح بيانات التطبيق من إعدادات النظام ليخرج — فيمحو البروفايل
-           والمفضّلات معه. */
-        *(if (!tv.own.owntv.BuildConfig.SALAMTV_LOCKED) emptyArray() else arrayOf(
-        RootRow(
-            "salamtv_account", TileTone.SECONDARY, OwnTVIcon.PERSON,
-            title = stringResource(R.string.salamtv_account),
-            desc = stringResource(R.string.salamtv_account_desc),
-            // ⚠ كان هذا الصفّ «تسجيل خروج» وحده. فمن أراد أن يعرف متى ينتهي
-            //   اشتراكه لم يجد أين، ومن اشترى رمز تجديد لم يجد أين يُدخله إلا
-            //   بعد أن يخرج — وهو آخر ما يخطر ببال من يريد أن يدفع لنا.
-            //   الثلاثة الآن حيث يبحث عنها: تحت «حسابي».
-            onClick = { settingsVm.refreshSubscription(); showAccount = true },
         ),
         )),
         RootRow(

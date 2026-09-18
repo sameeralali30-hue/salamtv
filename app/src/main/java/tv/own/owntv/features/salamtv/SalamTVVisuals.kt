@@ -125,7 +125,13 @@ fun BrandGradientTitle(size: Int = 44, modifier: Modifier = Modifier) {
  * على التلفاز غالباً لا شيء يفتح — وهذا متوقّع؛ الرقم نفسه في العنوان.
  */
 @Composable
-fun WhatsAppButton(number: String, modifier: Modifier = Modifier, style: OwnTVButtonStyle = OwnTVButtonStyle.PRIMARY) {
+fun WhatsAppButton(
+    number: String,
+    modifier: Modifier = Modifier,
+    style: OwnTVButtonStyle = OwnTVButtonStyle.PRIMARY,
+    /** نصّ جاهز تصوغه اللوحة (يشرح الطلب ويحمل اسم المستخدم) — يفتح واتساب والرسالة مكتوبة. */
+    message: String = "",
+) {
     if (number.isBlank()) return
     val ctx = LocalContext.current
     val digits = number.filter { it.isDigit() }
@@ -134,7 +140,7 @@ fun WhatsAppButton(number: String, modifier: Modifier = Modifier, style: OwnTVBu
         style = style,
         modifier = modifier,
         onClick = {
-            val url = "https://wa.me/$digits"
+            val url = "https://wa.me/$digits" + if (message.isNotBlank()) "?text=" + Uri.encode(message) else ""
             runCatching {
                 ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }.onFailure { e -> if (e !is ActivityNotFoundException) throw e }
@@ -148,6 +154,7 @@ fun SalamTVNoticeDialog(
     title: String,
     body: String,
     contact: String,
+    contactMessage: String = "",
     onDismiss: () -> Unit,
     dismissLabel: String = stringResource(R.string.salamtv_out_of_time_ok),
 ) {
@@ -170,7 +177,7 @@ fun SalamTVNoticeDialog(
             Text(body, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
             Spacer(Modifier.height(20.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (contact.isNotBlank()) WhatsAppButton(contact, Modifier.focusRequester(fr))
+                if (contact.isNotBlank()) WhatsAppButton(contact, Modifier.focusRequester(fr), message = contactMessage)
                 OwnTVButton(dismissLabel, onClick = onDismiss, style = if (contact.isNotBlank()) OwnTVButtonStyle.SECONDARY else OwnTVButtonStyle.PRIMARY,
                     modifier = if (contact.isBlank()) Modifier.focusRequester(fr) else Modifier)
             }

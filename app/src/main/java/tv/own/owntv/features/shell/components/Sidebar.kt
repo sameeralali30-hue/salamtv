@@ -59,6 +59,7 @@ import tv.own.owntv.ui.components.NavAccentBar
 import tv.own.owntv.ui.components.rememberNavLadderColors
 import tv.own.owntv.ui.components.OwnTVAvatar
 import tv.own.owntv.ui.components.NavDuotoneIcon
+import tv.own.owntv.ui.components.ProfileIcon
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.components.RailPanelFill
 import tv.own.owntv.ui.components.roundedPanel
@@ -90,6 +91,11 @@ fun Sidebar(
     /** Non-null while a mini player or an audio session is alive — see [NowPlayingRail]. */
     nowPlaying: NowPlayingRail? = null,
     onNowPlaying: () -> Unit = {},
+    /* [SALAMTV] الاشتراك في الشريط نفسه، فوق الإعدادات مباشرة. المشترك الذي اشترى رمزاً
+       يجب أن يجد أين يدخله من أوّل نظرة إلى الشاشة — لا في عمق قائمة الإعدادات
+       (على التلفاز كانت مجموعته آخر القائمة تحت حافة الشاشة). null = نسخة بلا اشتراك. */
+    onSubscription: (() -> Unit)? = null,
+    subscriptionActive: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val colors = OwnTVTheme.colors
@@ -179,6 +185,17 @@ fun Sidebar(
                     )
                     Spacer(Modifier.height(4.dp))
                 }
+                if (onSubscription != null) {
+                    NavItem(
+                        section = MainSection.SETTINGS,
+                        active = subscriptionActive,
+                        expanded = expanded,
+                        count = 0,
+                        onClick = onSubscription,
+                        icon = { color, m -> ProfileIcon(color = color, modifier = m) },
+                    )
+                    Spacer(Modifier.height(4.dp))
+                }
                 // Settings closes out the nav block.
                 NavItem(
                     section = MainSection.SETTINGS,
@@ -202,13 +219,15 @@ fun Sidebar(
                 .height(1.dp)
                 .background(colors.outlineVariant),
         )
+        /* [SALAMTV] صورة الملفّ في أسفل الشريط هي ما يسمّيه المشترك «الملف الشخصيّ» ويقصده
+           أوّلاً — فتفتح حسابه (رمز التفعيل، الخطّة، الخروج). الضغط المطوّل يبقى للصورة. */
         ProfileCard(
             expanded = expanded,
             avatarId = avatarId,
             profileName = profileName,
             sourceSummary = sourceSummary,
             onPickAvatar = onPickAvatar,
-            onSwitchProfile = onSwitchProfile,
+            onSwitchProfile = onSubscription ?: onSwitchProfile,
         )
     }
 }
@@ -447,6 +466,8 @@ private fun NavItem(
     count: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /** A glyph other than the section's own — the rail item that is an action, not a destination. */
+    icon: (@Composable (color: Color, modifier: Modifier) -> Unit)? = null,
 ) {
     val colors = OwnTVTheme.colors
     // Approved compact beacon: the focus owner still spans the rail for reliable D-pad targeting,
@@ -516,11 +537,9 @@ private fun NavItem(
             ) {
                 // Monochrome duotone nav icon — tints via the shared ladder (muted idle, white cursor,
                 // accent when active). No per-frame animation on the always-visible nav.
-                NavDuotoneIcon(
-                    section = section,
-                    color = if (active) colors.onPrimaryContainer else ladder.icon,
-                    modifier = Modifier.size(24.dp),
-                )
+                val tint = if (active) colors.onPrimaryContainer else ladder.icon
+                if (icon != null) icon(tint, Modifier.size(24.dp))
+                else NavDuotoneIcon(section = section, color = tint, modifier = Modifier.size(24.dp))
             }
         }
     }

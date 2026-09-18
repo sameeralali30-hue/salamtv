@@ -133,6 +133,9 @@ class ShellViewModel(
     /** ما تقوله اللوحة عن اشتراك هذا الجهاز — تعرضه شاشة «حسابي». */
     val subscription = subscriptionWatcher.status
 
+    /** رخصة لوحة المشغّل بحسب تذكرة المركز — false تحجب التطبيق كلّه (ADR-5). */
+    val licensed = subscriptionWatcher.licensed
+
     /**
      * يسأل اللوحة إن تغيّرت خطّة المشترك، ويعيد بناء الكتالوج إن تغيّرت.
      *

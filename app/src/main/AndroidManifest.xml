@@ -90,15 +90,11 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"
-            android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.OwnTV.Starting">
-            <!-- LEANBACK_LAUNCHER shows it on TV launchers; LAUNCHER shows it on phone/tablet/box home
-                 screens (so non-TV devices get an app icon, not just an install). -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            <!-- ═══ [SALAMTV] ملفّان: tv و phone (بُعد «form» في build.gradle.kts) ═══
+                 مرشّح الإطلاق ليس هنا بل في بيان كلّ نكهة: src/tv يعلن LEANBACK_LAUNCHER + LAUNCHER
+                 (قائمة التلفاز والهاتف معاً — الملفّ الذي كان عامّاً)، وsrc/phone يعلن LAUNCHER وحده.
+                 المعرّف والتوقيع واحد فيهما، فهاتفٌ على نسخة التلفاز يتلقّى نسخة الهاتف كتحديث عاديّ. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

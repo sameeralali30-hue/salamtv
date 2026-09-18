@@ -48,7 +48,7 @@ import tv.own.owntv.features.profiles.ProfileGate
 import tv.own.owntv.features.profiles.ProfileGateSessionViewModel
 import tv.own.owntv.features.profiles.ProfilesViewModel
 import tv.own.owntv.features.setup.Onboarding
-import tv.own.owntv.features.shell.OwnTVShell
+import tv.own.owntv.features.setup.UnlicensedScreen
 import tv.own.owntv.features.shell.ShellViewModel
 import tv.own.owntv.ui.theme.BlurredBackdrop
 import tv.own.owntv.ui.theme.BackdropLuminanceMap
@@ -277,6 +277,7 @@ class MainActivity : ComponentActivity() {
                 authenticatedProfileId == loadedProfileId
             // وضع المزوّد: خرج من اشتراكه فبقي بروفايله. `null` = لم تُقرأ المصادر بعد.
             val signedOut by viewModel.signedOut.collectAsStateWithLifecycle()
+            val licensed by viewModel.licensed.collectAsStateWithLifecycle()
             val shellReady = tv.own.owntv.features.profiles.shellMayCompose(
                 profileState = profileState,
                 activeProfileId = loadedProfileId,
@@ -471,37 +472,45 @@ class MainActivity : ComponentActivity() {
                                 onCancel = {},
                                 modifier = Modifier.fillMaxSize(),
                             )
-                            shellReady -> OwnTVShell(
-                                selectedSection = selectedSection,
-                                visibleSections = visibleSections,
-                                onSelectSection = viewModel::selectSection,
-                                themeMode = themeMode,
-                                uiZoomPercent = uiZoomPercent,
-                                onSetZoom = viewModel::setUiZoom,
-                                fontCustomization = fontCustomization,
-                                onSetFontCustomization = viewModel::setFontCustomization,
-                                avatarId = avatarId,
-                                onSetAvatar = viewModel::setAvatar,
-                                profileName = profileName,
-                                sourceSummary = sourceSummary,
-                                playlists = playlists,
-                                activePlaylistId = activePlaylistId,
-                                onSelectPlaylist = viewModel::setActivePlaylist,
-                                weatherInfo = weather,
-                                weatherFahrenheit = weatherFahrenheit,
-                                activeProfileId = activeProfileId,
-                                pendingDeepLink = pendingDeepLink,
-                                onDeepLinkConsumed = { pendingDeepLink = null },
-                                isOffline = !isOnline,
-                                onExitApp = { finish() },
-                                onSwitchProfile = {
-                                    // Stop playback and return to the "Who's watching?" gate — no app restart.
-                                    player.onAppBackgrounded(); player.discardBackgroundRestore(); previewEngine.stop(); previewEngine.discardBackgroundRestore(); heroPreviewEngine.stop()
-                                    // Force the gate open even with a single unpinned profile (cold-start gate would
-                                    // skip it). requestSwitchProfile() clears the active profile
-                                    // authentication and raises the request.
-                                    gateSession.requestSwitchProfile()
-                                },
+                            // لوحة المشغّل بلا رخصة سارية (تذكرة المركز غائبة أو مرفوضة) ⇒ لا قشرة ولا بثّ.
+                            // بعد بوّابة البروفايل والدخول عمداً: من لم يدخل بعد لا يُحكم على لوحته.
+                            licensed == false && tv.own.owntv.BuildConfig.SALAMTV_LOCKED -> UnlicensedScreen(
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                            // [SALAMTV] القشرة بحسب النكهة (src/tv: OwnTVShell، src/phone: قشرة الهاتف).
+                            shellReady -> FormShell(
+                                args = tv.own.owntv.features.shell.ShellArgs(
+                                    selectedSection = selectedSection,
+                                    visibleSections = visibleSections,
+                                    onSelectSection = viewModel::selectSection,
+                                    themeMode = themeMode,
+                                    uiZoomPercent = uiZoomPercent,
+                                    onSetZoom = viewModel::setUiZoom,
+                                    fontCustomization = fontCustomization,
+                                    onSetFontCustomization = viewModel::setFontCustomization,
+                                    avatarId = avatarId,
+                                    onSetAvatar = viewModel::setAvatar,
+                                    profileName = profileName,
+                                    sourceSummary = sourceSummary,
+                                    playlists = playlists,
+                                    activePlaylistId = activePlaylistId,
+                                    onSelectPlaylist = viewModel::setActivePlaylist,
+                                    weatherInfo = weather,
+                                    weatherFahrenheit = weatherFahrenheit,
+                                    activeProfileId = activeProfileId,
+                                    pendingDeepLink = pendingDeepLink,
+                                    onDeepLinkConsumed = { pendingDeepLink = null },
+                                    isOffline = !isOnline,
+                                    onExitApp = { finish() },
+                                    onSwitchProfile = {
+                                        // Stop playback and return to the "Who's watching?" gate — no app restart.
+                                        player.onAppBackgrounded(); player.discardBackgroundRestore(); previewEngine.stop(); previewEngine.discardBackgroundRestore(); heroPreviewEngine.stop()
+                                        // Force the gate open even with a single unpinned profile (cold-start gate would
+                                        // skip it). requestSwitchProfile() clears the active profile
+                                        // authentication and raises the request.
+                                        gateSession.requestSwitchProfile()
+                                    },
+                                ),
                                 modifier = Modifier.fillMaxSize(),
                             )
                             // No unexpected combination of asynchronous state may fall through to
@@ -515,6 +524,25 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    // ═══ [SALAMTV] صورة داخل صورة — مشغّل الهاتف (PipBridge) ═══
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (!PipBridge.wanted || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.O) return
+        if (!packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
+        runCatching {
+            enterPictureInPictureMode(
+                android.app.PictureInPictureParams.Builder()
+                    .setAspectRatio(android.util.Rational(16, 9))
+                    .build(),
+            )
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: android.content.res.Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        PipBridge.setActive(isInPictureInPictureMode)
     }
 }
 

@@ -131,6 +131,8 @@ fun Onboarding(
     var newAccount by remember { mutableStateOf<Pair<String, String>?>(null) }
     // بناء المزوّد: المشترك يسجّل الدخول ولا يختار خادماً ولا يضيف قائمة.
     val locked = tv.own.owntv.BuildConfig.SALAMTV_LOCKED
+    // نكهة الهاتف: دليل البرامج يُزامَن بلا سؤال (انظر أدناه). الملفّ الشخصيّ يبقى كما هو بقرار المالك.
+    val autoSetup = tv.own.owntv.BuildConfig.SALAMTV_FORM == "phone"
     var existing by remember { mutableStateOf<List<SourceEntity>>(emptyList()) }
     // Where "Try Again" returns to when an import fails (new source vs. linking existing).
     var importOrigin by remember { mutableStateOf(Step.ADD_SOURCE) }
@@ -361,8 +363,12 @@ fun Onboarding(
                 onDismiss = { showRedeem = false; vm.clearRedeem(); newAccount = null },
             )
         }
+        // [SALAMTV] الهاتف: الدليل يُزامَن دائماً بلا سؤال — الدخول إلى التطبيق فوراً والدليل يكتمل في الخلفيّة.
+        if (autoSetup && epgSync is tv.own.owntv.features.settings.EpgSyncUi.Ask) {
+            LaunchedEffect(epgSync) { vm.syncPendingEpg(); vm.syncEpgInBackground(onDone) }
+        }
         // Semi-auto EPG: after the first playlist imports, ask → sync (live count) → done (overlays "All set!").
-        EpgSyncDialog(
+        if (!autoSetup) EpgSyncDialog(
             state = epgSync,
             onSync = vm::syncPendingEpg,
             onDismiss = vm::dismissPendingEpg,

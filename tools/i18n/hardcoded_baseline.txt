@@ -4,6 +4,7 @@
 # Phase 1 deletes occurrences until this file is empty; the CI guard then becomes absolute.
 # Format: <count>\t<relative path>\t<content with \t/\n escaped>
 
+1	app/src/main/java/tv/own/owntv/features/adverts/OutOfTimeDialog.kt	\0
 1	app/src/main/java/tv/own/owntv/features/customize/BulkRenameDialogs.kt	ADD
 1	app/src/main/java/tv/own/owntv/features/customize/BulkRenameDialogs.kt	PREFIX
 1	app/src/main/java/tv/own/owntv/features/customize/BulkRenameDialogs.kt	REMOVE
@@ -29,6 +30,7 @@
 1	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	LiveEngine
 1	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	mpv handoff for '${channel.name}' abandoned — the channel changed while ExoPlayer released
 1	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	starting mpv for '${channel.name}' — reason=$reason
+3	app/src/main/java/tv/own/owntv/features/salamtv/SalamTVVisuals.kt	\0
 8	app/src/main/java/tv/own/owntv/features/settings/DnsSettingsScreen.kt	\0
 1	app/src/main/java/tv/own/owntv/features/settings/DnsSettingsScreen.kt	${cfg.host}$p
 1	app/src/main/java/tv/own/owntv/features/settings/DnsSettingsScreen.kt	:${cfg.port}
@@ -54,15 +56,20 @@
 1	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	–
 1	app/src/main/java/tv/own/owntv/features/setup/RedeemDialog.kt	\0
 1	app/src/main/java/tv/own/owntv/features/setup/SetupViewModel.kt	\0
+2	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	\0
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	/app_account.php
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	/app_redeem.php
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	/app_register.php
+1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	device_id
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	offline
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	redeem ok
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	redeem refused
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	redeem transport failure: ${e.javaClass.simpleName}
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	unknown
 3	app/src/main/java/tv/own/owntv/features/setup/SubscriberLoginScreen.kt	\0
+1	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	ok
+1	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	panel licence:
+1	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	refused
 1	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	subscription changed — rebuilding catalogue
 1	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	subscription changed — resyncing sourceId=${source.id}
 1	app/src/main/java/tv/own/owntv/features/shell/ShellViewModel.kt	subscription_changed

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import tv.own.owntv.core.setup.LicenseTicket
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -66,8 +67,13 @@ import kotlinx.coroutines.sync.withLock
 class SubscriptionWatcher(
     context: Context,
     private val login: SubscriberLoginClient,
+    private val localeStore: tv.own.owntv.core.i18n.LocaleStore,
 ) {
     private val prefs = context.getSharedPreferences("salamtv_subscription", Context.MODE_PRIVATE)
+
+    /** مضيف الدخول — التذكرة مربوطة به (نطاق المشغّل)، لا بمضيف البثّ. قبل [_licensed]: يُقرأ في تهيئتها. */
+    private val loginHost: String =
+        runCatching { android.net.Uri.parse(tv.own.owntv.BuildConfig.SALAMTV_LOGIN_URL).host.orEmpty() }.getOrDefault("")
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val gate = Mutex()   // ④
 
@@ -77,6 +83,17 @@ class SubscriptionWatcher(
     val status: StateFlow<SubscriberLoginClient.Status?> = _status.asStateFlow()
 
     private val _checks = MutableStateFlow(0L)
+
+    /**
+     * هل لوحة المشغّل مرخَّصة؟ null = لم يُفحص بعد ولا تذكرة محفوظة (تركيب جديد).
+     *
+     * القرار من تذكرة المركز الموقَّعة ([tv.own.owntv.core.setup.LicenseTicket]) التي تأتي مع
+     * كلّ ردّ حساب: صالحةٌ ⇒ مرخَّصة؛ غائبةٌ أو مرفوضة ⇒ لا. آخر تذكرة صالحة تُحفظ فتصمد
+     * اللوحة المنقطعة عن المركز ما دامت تذكرتها لم تنتهِ (أسبوع كحدّ أقصى) — وبعدها تُقفل
+     * حتّى لو كانت اللوحة نفسها تجيب.
+     */
+    val licensed: StateFlow<Boolean?> get() = _licensed
+    private val _licensed = MutableStateFlow(storedTicketValid())
 
     /**
      * عدّاد يزداد بعد **كلّ** فحصٍ ناجح، تغيّرت الحالة أو لم تتغيّر.
@@ -130,20 +147,25 @@ class SubscriptionWatcher(
                 }
                 lastCheckAtMs = now
                 _status.value = st                       // ⑤
+                judgeLicense(st.licenseTicket)
                 _checks.value = _checks.value + 1
                 // ⑦ الإيقاع بيد الخادم، والحدّان هنا فلا يُساء استعماله.
                 if (st.pollSeconds > 0) {
                     pollIntervalMs = (st.pollSeconds * 1000L).coerceIn(MIN_POLL_MS, MAX_POLL_MS)
                 }
 
+                /* [SALAMTV] اللغة جزء من البصمة: أسماء الأقسام تُحفظ محلّيّاً بلغة وقت المزامنة، فتبديل
+                   لغة التطبيق يجب أن يعيد بناء الكتالوج كما يفعل تغيير الخطّة — وإلّا بقيت الأقسام
+                   بالعربيّة داخل واجهة إنجليزيّة حتّى الخروج والدخول. */
                 val key = KEY_REV + ":" + username
                 val known = prefs.getString(key, null)
-                prefs.edit().putString(key, st.rev).apply()
+                val revNow = st.rev + "|" + tv.own.owntv.core.i18n.AppLang.code(localeStore)
+                prefs.edit().putString(key, revNow).apply()
 
                 when {
                     // ③ أوّل قراءة: تُسجَّل فقط.
                     known == null -> Log.i(TAG, "first revision recorded")
-                    known != st.rev -> {
+                    known != revNow -> {
                         Log.i(TAG, "subscription changed — rebuilding catalogue")
                         onChanged()
                     }
@@ -153,6 +175,19 @@ class SubscriptionWatcher(
                 gate.unlock()
             }
         }
+    }
+
+    private fun storedTicketValid(): Boolean? {
+        val t = prefs.getString(KEY_TICKET, null) ?: return null
+        return LicenseTicket.verify(t, loginHost) != null
+    }
+
+    /** تذكرة الردّ الأخير: تُحفظ إن صحّت، وتُحذف إن غابت أو رُفضت — فلا تبقى تذكرة قديمة تغطّي لوحة أُبطلت. */
+    private fun judgeLicense(ticket: String) {
+        val ok = ticket.isNotBlank() && LicenseTicket.verify(ticket, loginHost) != null
+        prefs.edit().apply { if (ok) putString(KEY_TICKET, ticket) else remove(KEY_TICKET) }.apply()
+        if (_licensed.value != ok) Log.w(TAG, "panel licence: " + if (ok) "ok" else "refused")
+        _licensed.value = ok
     }
 
     /**
@@ -196,11 +231,13 @@ class SubscriptionWatcher(
     fun forget(username: String) {
         prefs.edit().remove(KEY_REV + ":" + username).apply()
         _status.value = null
+        _licensed.value = storedTicketValid()
     }
 
     companion object {
         private const val TAG = "SalamTVWatch"
         private const val KEY_REV = "rev"
+        private const val KEY_TICKET = "license_ticket"
 
         /**
          * أقصر ما بين فحصين — حارسٌ ضدّ الازدواج لا مهلة انتظار.

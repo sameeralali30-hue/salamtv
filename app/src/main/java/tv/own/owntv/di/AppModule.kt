@@ -45,9 +45,9 @@ val appModule = module {
     singleOf(::GuideReader)
     singleOf(::HomeFeedReader)
     viewModelOf(::HomeViewModel)
-    single { tv.own.owntv.features.setup.SubscriberLoginClient(get(), get()) }
+    single { tv.own.owntv.features.setup.SubscriberLoginClient(get(), get(), get()) }
     // مفرد: البصمة المحفوظة وقفل الفحص يجب أن يكونا واحداً لكلّ التطبيق.
-    single { tv.own.owntv.features.setup.SubscriptionWatcher(androidContext(), get()) }
+    single { tv.own.owntv.features.setup.SubscriptionWatcher(androidContext(), get(), get()) }
 
     /* ══ الإعلانات ══
        الترتيب هنا مقصود ومقيَّد: الكاش يسبق المستودع لأنّ المستودع يستدعيه عند

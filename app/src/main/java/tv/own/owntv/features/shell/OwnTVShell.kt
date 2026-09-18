@@ -163,6 +163,8 @@ fun OwnTVShell(
     var playerMode by remember { mutableStateOf(PlayerMode.NONE) }
     // Deep-link: the Guide's "Add EPG" button switches to Settings and opens EPG Sources → add.
     var openEpgAdd by remember { mutableStateOf(false) }
+    // [SALAMTV] Deep-link: the rail's Subscription item switches to Settings and opens «My account».
+    var openAccount by remember { mutableStateOf(false) }
     // One-shot: set when leaving the player so the returning browse screen re-focuses the item you played.
     var restoreFocus by remember { mutableStateOf(false) }
     var restoreTrendingSearchFocus by remember { mutableStateOf(false) }
@@ -801,6 +803,10 @@ fun OwnTVShell(
                 topInset = shellTopBarHeight,
                 nowPlaying = nowPlayingRail,
                 onNowPlaying = enterNowPlaying,
+                onSubscription = if (tv.own.owntv.BuildConfig.SALAMTV_LOCKED) {
+                    { openAccount = true; onSelectSection(MainSection.SETTINGS) }
+                } else null,
+                subscriptionActive = openAccount && selectedSection == MainSection.SETTINGS,
             )
 
             Column(
@@ -913,6 +919,8 @@ fun OwnTVShell(
                             onOpenPlaylist = { /* Phase 6: open setup/playlist */ },
                             openEpgAdd = openEpgAdd,
                             onEpgAddConsumed = { openEpgAdd = false },
+                            openAccount = openAccount,
+                            onAccountConsumed = { openAccount = false },
                             modifier = Modifier
                                 .fillMaxSize()
                                 .onFocusChanged { if (it.hasFocus) focusedLayer = ShellLayer.CONTENT }
@@ -1298,6 +1306,7 @@ fun OwnTVShell(
                     tv.own.owntv.features.adverts.OutOfTimeDialog(
                         contact = liveVm.advertContact(),
                         onDismiss = liveVm::dismissOutOfTime,
+                        contactMessage = shellVm.subscription.value?.contactText.orEmpty(),
                     )
                 }
 

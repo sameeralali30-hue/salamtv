@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- نكهة التلفاز: تظهر في قائمة Android TV / Fire TV، وتبقى قابلة للتثبيت على الهاتف والرسيفر. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- عرضيّ دائماً: واجهة الثلاثة أعمدة صُمّمت لشاشة عريضة (انظر التعليق في بيان main القديم). -->
+        <activity android:name=".MainActivity" android:screenOrientation="sensorLandscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

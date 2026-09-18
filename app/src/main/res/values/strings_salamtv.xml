@@ -8,6 +8,8 @@
     lives in this file.
 -->
 <resources>
+    <string name="salamtv_unlicensed_title">Service unavailable</string>
+    <string name="salamtv_unlicensed_body">Your provider’s service licence is not valid right now. Please contact your provider.</string>
     <string name="salamtv_login_title">Sign in</string>
     <string name="salamtv_login_subtitle">Enter the username and password from your reseller.</string>
     <string name="salamtv_login_username">Username</string>
@@ -35,6 +37,9 @@
     <!-- حساب المشترك: ما يراه في الإعدادات -->
     <string name="salamtv_account">My account</string>
     <string name="salamtv_account_desc">Your plan, when it started and when it ends</string>
+    <string name="salamtv_subscription_group">Subscription</string>
+    <string name="salamtv_subscription_group_desc">Activation code, your plan and its end date</string>
+    <string name="salamtv_redeem_row_desc">Enter a code from your reseller to activate or renew</string>
     <string name="salamtv_account_username">Username</string>
     <string name="salamtv_account_plan">Plan</string>
     <string name="salamtv_account_started">Started</string>
@@ -93,4 +98,52 @@
     <string name="salamtv_out_of_time_contact">To activate a subscription, contact us: %1$s</string>
     <string name="salamtv_out_of_time_ok">Got it</string>
     <string name="salamtv_minutes_left">%1$d min left today</string>
+    <!-- ═══ Phone shell (src/phone) ═══ -->
+    <string name="phone_tab_home">Home</string>
+    <string name="phone_tab_live">Channels</string>
+    <string name="phone_tab_movies">Movies</string>
+    <string name="phone_tab_series">Series</string>
+    <string name="phone_tab_account">My account</string>
+    <string name="phone_rail_all">All</string>
+    <string name="phone_rail_favorites">Favorites</string>
+    <string name="phone_rail_history">Recent</string>
+    <string name="phone_rail_catchup">Catch-up</string>
+    <string name="phone_search_hint">Search…</string>
+    <string name="phone_empty_channels">No channels here yet.</string>
+    <string name="phone_empty_movies">No movies here yet.</string>
+    <string name="phone_empty_series">No series here yet.</string>
+    <string name="phone_now">Now</string>
+    <string name="phone_next">Next</string>
+    <string name="phone_continue_watching">Continue watching</string>
+    <string name="phone_recent_channels">Recently watched</string>
+    <string name="phone_favorite_channels">Favorite channels</string>
+    <string name="phone_home_empty">Pick a channel or a movie and it will show up here.</string>
+    <string name="phone_season">Season %1$d</string>
+    <string name="phone_episode">E%1$d · %2$s</string>
+    <string name="phone_play">Play</string>
+    <string name="phone_resume">Resume</string>
+    <string name="phone_account_plan">Plan</string>
+    <string name="phone_account_days_left">Days left</string>
+    <string name="phone_account_unlimited">Unlimited</string>
+    <string name="phone_account_state_active">Active</string>
+    <string name="phone_account_state_expired">Expired</string>
+    <string name="phone_account_state_pending">Pending activation</string>
+    <string name="phone_account_state_disabled">Disabled</string>
+    <string name="phone_account_redeem">Activation code</string>
+    <string name="phone_account_redeem_desc">Enter a code from your reseller to activate or renew</string>
+    <string name="phone_account_promo">Discount code</string>
+    <string name="phone_account_whatsapp">Contact on WhatsApp</string>
+    <string name="phone_account_sign_out">Sign out</string>
+    <string name="phone_account_sign_out_confirm">Sign out of this account on this device?</string>
+    <string name="phone_account_version">App version %1$s</string>
+    <string name="phone_account_check_update">Check for updates</string>
+    <string name="phone_player_quality">Quality</string>
+    <string name="phone_player_auto">Auto</string>
+    <string name="phone_player_channels">Channels</string>
+    <string name="phone_player_retry">Retry</string>
+    <string name="phone_player_loading">Loading…</string>
+    <string name="phone_offline">No connection</string>
+    <string name="phone_browse">Browse</string>
+    <string name="phone_close">Close</string>
+    <string name="phone_cancel">Cancel</string>
 </resources>
