@@ -116,6 +116,7 @@ val appModule = module {
             playbackPrefs = get(),
             subscriberLogin = get(),
             subscriptionWatcher = get(),
+            player = get(),
         )
     }
     viewModelOf(::HomeSettingsViewModel)

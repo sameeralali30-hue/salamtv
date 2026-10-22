@@ -91,6 +91,7 @@ class SettingsViewModel(
     private val vodEngineStore: tv.own.owntv.core.player.VodEngineStore,
     private val playbackPrefs: tv.own.owntv.core.player.PlaybackPrefsStore,
     private val subscriptionWatcher: tv.own.owntv.features.setup.SubscriptionWatcher,
+    private val player: tv.own.owntv.player.OwnTVPlayer,
 ) : ViewModel() {
     companion object {
         private const val TAG = "OwnTVHome"
@@ -1380,6 +1381,13 @@ class SettingsViewModel(
     fun signOut(source: SourceEntity, onDone: () -> Unit = {}) {
         if (source.id in _deletingSourceIds.value) return
         viewModelScope.launch {
+            /* [SALAMTV] الصورة تتوقّف قبل أن يُحذف الحساب.
+               كان الخروج يبلّغ الخادم ويحذف المصدر ولا يقول للمشغّل شيئاً، فتبقى القناة
+               تعمل بعد أن يصير صاحبها بلا حساب — والمشترك يظنّ الخروج فشل. والمشغّل
+               نسخة واحدة في التطبيق كلّه، فإيقافه هنا يكفي.
+               ويُوقَف بلا شرط: من طلب الخروج لا يريد شيئاً يواصل العمل، ولو كان من مصدر
+               آخر. وكلفة الخطأ مشاهدةٌ تُستأنف بضغطة، لا بثٌّ يتيم يظلّ يسحب من المزوّد. */
+            player.stop()
             val user = source.username.orEmpty()
             val pass = source.password.orEmpty()
             if (user.isNotBlank() && pass.isNotBlank()) {

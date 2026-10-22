@@ -807,6 +807,8 @@ fun OwnTVShell(
                     { openAccount = true; onSelectSection(MainSection.SETTINGS) }
                 } else null,
                 subscriptionActive = openAccount && selectedSection == MainSection.SETTINGS,
+                // نفس السؤال الذي يفتحه زرّ الرجوع من هذا الشريط — طريقٌ ثانٍ إليه، لا طريق آخر.
+                onExit = { showExit = true },
             )
 
             Column(

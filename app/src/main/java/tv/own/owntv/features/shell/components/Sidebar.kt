@@ -96,6 +96,11 @@ fun Sidebar(
        (على التلفاز كانت مجموعته آخر القائمة تحت حافة الشاشة). null = نسخة بلا اشتراك. */
     onSubscription: (() -> Unit)? = null,
     subscriptionActive: Boolean = false,
+    /* [SALAMTV] الخروج زرّاً لا سرّاً. كان يُفتح بضغطة رجوعٍ ثانية بعد أن يصل التركيز
+       إلى هذا الشريط — سلوكٌ صحيح لمن يعرفه، ولا شيء في الشاشة يدلّ عليه. والمشترك
+       على التلفاز لا يملك زرّ «تطبيقات» يخرج منه كما في الهاتف، فإمّا أن يجد الخروج
+       هنا أو يظنّ التطبيق أمسكه. null = لا عنصر (الهاتف يخرج بزرّ النظام). */
+    onExit: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val colors = OwnTVTheme.colors
@@ -207,6 +212,21 @@ fun Sidebar(
                         Modifier.focusRequester(selectedItemFocusRequester)
                     } else Modifier,
                 )
+                if (onExit != null) {
+                    Spacer(Modifier.height(4.dp))
+                    // ليس وجهة: الضغط يفتح سؤال التأكيد نفسه الذي يفتحه زرّ الرجوع،
+                    // فلا يخرج أحد بضغطةٍ عابرة ولا يتكرّر منطق الخروج في مكانين.
+                    NavItem(
+                        section = MainSection.SETTINGS,
+                        active = false,
+                        expanded = expanded,
+                        count = 0,
+                        onClick = onExit,
+                        icon = { color, m ->
+                            OwnTVIcon(icon = OwnTVIcon.POWER, tint = color, modifier = m)
+                        },
+                    )
+                }
             }
         }
 
