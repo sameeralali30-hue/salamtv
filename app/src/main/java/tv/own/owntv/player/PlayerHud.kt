@@ -56,6 +56,7 @@ import tv.own.owntv.core.settings.RemoteShortcutAction
 import tv.own.owntv.core.settings.RemoteShortcutPress
 import tv.own.owntv.ui.components.LocalRemoteShortcuts
 import tv.own.owntv.ui.components.OwnTVButton
+import tv.own.owntv.ui.components.OwnTVButtonStyle
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.components.OwnTVSpinner
 import tv.own.owntv.ui.components.displayText // PlayerFailureReason.displayText, for the error overlay
@@ -146,6 +147,14 @@ fun PlayerHud(
     // Live: open the watch-history list (Right while the controls are hidden) — jump straight back to a
     // recent channel without leaving full-screen. Null = not a live channel.
     onOpenHistoryList: (() -> Unit)? = null,
+    // "Channel not working" in the error overlay: report the dead channel to the panel. Receives the
+    // technical detail already on screen, so the panel stores the same line the user can read.
+    // Null = reporting impossible here (not a panel channel, or its URL carries no device token).
+    onReportChannel: ((String) -> Unit)? = null,
+    // Replaces the report button once pressed: "Sending…", then the panel's own reply. The panel is the
+    // only party that knows whether its probe confirmed the fault or the fault is in this viewer's
+    // network, so its sentence is shown verbatim rather than reworded here.
+    reportStatus: String? = null,
     // Live rewind / timeshift (catch-up channels). onRewindLive non-null = this live channel can rewind;
     // timeshiftOffsetSec non-null = currently watching that many seconds behind the live edge.
     onRewindLive: (() -> Unit)? = null,
@@ -718,6 +727,33 @@ fun PlayerHud(
                 }
                 Spacer(Modifier.height(18.dp))
                 OwnTVButton(stringResource(R.string.common_retry), onClick = { player.retry() }, icon = OwnTVIcon.PLAY, modifier = Modifier.focusRequester(retryFocus))
+                // "Channel not working" — under Retry, never instead of it: a dead-looking channel is
+                // often a hiccup, and a viewer who reports before retrying teaches the panel nothing.
+                // The detail is read HERE, in composition, because displayText() resolves string
+                // resources and cannot be called from the click handler.
+                onReportChannel?.let { report ->
+                    val detail = errorInfo?.raw?.takeIf { it.isNotBlank() }
+                        ?: errorInfo?.reason?.displayText()
+                        ?: error?.displayText()
+                        ?: ""
+                    Spacer(Modifier.height(10.dp))
+                    if (reportStatus != null) {
+                        Text(
+                            reportStatus,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.85f),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(0.8f),
+                        )
+                    } else {
+                        OwnTVButton(
+                            stringResource(R.string.player_report_channel),
+                            onClick = { report(detail) },
+                            style = OwnTVButtonStyle.SECONDARY,
+                            icon = OwnTVIcon.WARNING,
+                        )
+                    }
+                }
             }
             // A provider wait looks like loading, because that is what it is: the channel is queued behind
             // the panel's own countdown and the engine re-asks by itself. The line under the spinner says

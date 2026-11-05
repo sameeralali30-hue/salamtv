@@ -1211,6 +1211,26 @@ fun OwnTVShell(
                 // position on the other engine) rather than Live TV's compatibility toggle, which would
                 // re-tune the live stream and jump the user to the current programme.
                 val isTunedLive = isLiveChannel && !catchupActive
+
+                /* ══ بلاغ «القناة لا تعمل» ══
+                   الحالة هنا لا في LiveViewModel عمداً: هي حالةُ شاشةٍ واحدة تموت
+                   بإغلاقها، ولا تستحقّ معاملاً خامساً وعشرين في مُنشئ نموذجٍ فيه
+                   أربعةٌ وعشرون. والمفتاح `previewChannel?.id` يصفّرها عند تبديل
+                   القناة، فلا يرى المشاهد جوابَ قناةٍ سابقة على قناةٍ أخرى.
+
+                   ويظهر الزرّ بشرطين: قناةٌ حيّة، ورابطُها يحمل رمز الجهاز
+                   (`/d/<token>/`) — أي أنّها قناةُ لوحةٍ لا مصدرٌ خارجيّ أضافه
+                   المستخدم بنفسه، فاللوحة لا تعرف تلك ولا تستطيع فحصها. */
+                val reportClient = koinInject<tv.own.owntv.features.setup.SubscriberLoginClient>()
+                val reportScope = rememberCoroutineScope()
+                var reportStatus by remember(previewChannel?.id) { mutableStateOf<String?>(null) }
+                val reportSendingText = stringResource(R.string.player_report_sending)
+                val reportFailedText = stringResource(R.string.player_report_failed)
+                val reportableId = previewChannel
+                    ?.takeIf { isTunedLive && "/d/" in it.streamUrl }
+                    ?.remoteId?.toIntOrNull()
+                    ?: 0
+
                 /* ══ الـHUD لا يُركَّب أثناء الإعلان ══
                    ⚠ `inert` وحده لا يكفي: هو يمنع خطف التركيز، **ولا يُخفي
                      شيئاً**. أوّل تجربة على الجهاز أظهرت بطاقة الساعة وأزرار
@@ -1232,6 +1252,21 @@ fun OwnTVShell(
                     onChannelDown = zap?.let { z -> { z(1) } },
                     onOpenChannelList = if (isTunedLive && liveCanZap) { { showChannelList = true } } else null,
                     onOpenHistoryList = if (isTunedLive) { { showHistoryList = true } } else null,
+                    onReportChannel = if (reportableId > 0) { detail: String ->
+                        val url = previewChannel?.streamUrl.orEmpty()
+                        reportStatus = reportSendingText
+                        reportScope.launch {
+                            val result = reportClient.reportChannel(url, reportableId, detail)
+                            reportStatus = result.getOrNull()?.message?.takeIf { it.isNotBlank() }
+                            // رسالةُ اللوحة عند الرفض أدقّ من أيّ نصٍّ عامّ؛ ونصُّنا
+                            // للانقطاع وحده، حيث لا رسالةَ من أحد.
+                                ?: (result.exceptionOrNull()
+                                    as? tv.own.owntv.features.setup.SubscriberLoginClient.LoginException)
+                                    ?.message?.takeIf { it.isNotBlank() }
+                                ?: reportFailedText
+                        }
+                    } else null,
+                    reportStatus = reportStatus,
                     onRewindLive = if (isTunedLive && canRewindLive) liveVm::rewindLive else null,
                     onForwardLive = if (isTunedLive) liveVm::forwardLive else null,
                     onGoToLive = if (isTunedLive) liveVm::goToLive else null,

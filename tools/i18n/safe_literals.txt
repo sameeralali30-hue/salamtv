@@ -494,7 +494,7 @@
 2	url	app/src/main/java/tv/own/owntv/features/setup/SetupViewModel.kt	UTF-8
 1	empty	app/src/main/java/tv/own/owntv/features/setup/SetupWizard.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/features/setup/SetupWizard.kt	phone
-20	empty	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	\0
+26	empty	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	\0
 3	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	$
 1	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	%
 1	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	%.2f
@@ -503,7 +503,8 @@
 1	url	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	/app-adverts
 1	url	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	/app-adverts-report
 1	url	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	/app_promo.php
-9	protocol	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	Accept
+1	regex	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	/d/([a-f0-9]{32})/
+10	protocol	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	Accept
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	SalamTVLogin
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	account check failed: ${it.javaClass.simpleName}
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	active
@@ -512,10 +513,11 @@
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	advert rules fetch failed: ${it.javaClass.simpleName}
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	amount
 1	url	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	app_device_reset.php
-2	url	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	app_login.php
+3	url	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	app_login.php
 1	url	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	app_logout.php
-2	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	app_version
-10	protocol	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	application/json
+1	url	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	app_report_channel.php
+3	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	app_version
+11	protocol	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	application/json
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	balance_minutes
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	base
 5	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	code
@@ -524,7 +526,7 @@
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	contact_text
 3	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	currency
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	days_left
-3	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	device_id
+5	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	device_id
 2	protocol	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	device_limit
 2	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	devices
 2	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	discount_pct
@@ -540,31 +542,37 @@
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	logout failed; local playlist removed anyway
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	max_connections
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	max_quality
-5	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	message
+7	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	message
+1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	missing
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	node
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	note
-9	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	ok
+10	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	ok
 9	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	password
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	plan
 5	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	plan_name
+1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	player_error
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	poll
 2	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	price_after
 2	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	price_before
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	price_due
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	promo
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	redeemed
-3	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	refused
+4	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	refused
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	register ok (redeemed=${json.optBoolean("redeemed")} selfServe=$selfServe)
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	register refused
 1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	register transport failure: ${e.javaClass.simpleName}
+1	log	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	report transport failure: ${e.javaClass.simpleName}
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	reset_hours
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	rev
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	self_serve
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	state
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	status
+1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	stream_id
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	sub_end
 1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	sub_start
+1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	token
 11	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	username
+1	json	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	verdict
 4	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	·
 2	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	· −
 1	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriberLogin.kt	— $it
@@ -579,6 +587,7 @@
 1	preference-key	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	salamtv_subscription
 1	technical	app/src/main/java/tv/own/owntv/features/setup/SubscriptionWatcher.kt	|
 5	empty	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	\0
+1	uri	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	/d/
 2	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	Action
 1	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	All Channels
 1	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	All Downloads
@@ -745,7 +754,7 @@
 1	technical	app/src/main/java/tv/own/owntv/player/MiniPlayer.kt	miniControls
 1	compiler	app/src/main/java/tv/own/owntv/player/MpvVideoSurface.kt	DEPRECATION
 1	technical	app/src/main/java/tv/own/owntv/player/PlayerClock.kt	EEEdMMM
-9	empty	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	\0
+10	empty	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	$k: $v
 1	technical	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	/ $it
 1	technical	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	?

@@ -232,10 +232,18 @@ class SubscriberLoginClient(
         password: String,
         code: String,
     ): Result<RegisterOutcome> = withContext(Dispatchers.IO) {
+        /* هويّة الجهاز مع التسجيل أيضاً، لا مع الدخول وحده: التجربة المجّانيّة
+           واحدة لكلّ جهاز (functions/free_trial.php)، فمن أخذها يُقال له الآن
+           ويُساق إلى نافذة الرمز بدل أن يأخذ يوماً آخر باسمٍ جديد.
+
+           ⚠ القيمة هي هي التي يرسلها الدخول: البصمة على الخادم
+             HMAC-SHA256('client|' + device_id)، وأيُّ اختلافٍ يمنح تجربةً ثانية. */
+        val installId = runCatching { clientId.get() }.getOrDefault("")
         val payload = JSONObject()
             .put("username", username)
             .put("password", password)
             .put("code", code)
+            .put("device_id", installId)
             .toString()
             .toRequestBody(JSON)
 
@@ -265,6 +273,70 @@ class SubscriberLoginClient(
             Log.w(TAG, "register refused")
             Result.failure(LoginException("refused", msg))
         }
+    }
+
+    /**
+     * نتيجة بلاغٍ عن قناة.
+     *
+     * [message] نصُّ اللوحة كما هو — تعرضه الواجهة بلا تعديل، لأنّ اللوحة وحدها
+     * تعرف ما جرى: هل أكّد مسبارُها العطل، أم أنّ القناة تعمل من خوادمها
+     * فالخلل في شبكة المشترك. و[verdict] للتسجيل لا للعرض.
+     */
+    data class ReportOutcome(val message: String, val verdict: String)
+
+    /**
+     * بلاغٌ عن قناةٍ لا تعمل — `app_report_channel.php`.
+     *
+     * الهويّة **رمزُ الجهاز** لا اسمُ المستخدم وكلمةُ المرور: الرمز بيد التطبيق
+     * أصلاً داخل مسار البثّ (`…/d/<token>/…`)، فلا داعي لتداول الاعتماد في كلّ
+     * بلاغ. واللوحة تستخرج منه المشترك وتتحقّق أنّ القناة ضمن باقته.
+     *
+     * والبلاغ تلميحٌ لا حكم: ثلاثة أجهزةٍ متمايزة خلال ربع ساعة تُطلق مسباراً
+     * من الخادم، وهو من يقرّر. فلا يُسقط جهازٌ واحدٌ قناةً سليمة.
+     */
+    suspend fun reportChannel(
+        streamUrl: String,
+        streamId: Int,
+        playerError: String,
+    ): Result<ReportOutcome> = withContext(Dispatchers.IO) {
+        /* الرمز من مسار البثّ نفسه — اللوحة تدسّه في العنوان بعد الدخول
+           (`base` ينتهي بـ`/d/<token>`)، فلا نخزّنه مرّةً ثانية ولا نسأل عنه.
+           البناء رخيصٌ هنا: الدالّة تُنادى بضغطة زرّ لا في حلقة. */
+        val deviceToken = Regex("/d/([a-f0-9]{32})/").find(streamUrl)
+            ?.groupValues?.get(1).orEmpty()
+        if (deviceToken.isBlank() || streamId < 1) {
+            return@withContext Result.failure(LoginException("missing", ""))
+        }
+        val payload = JSONObject()
+            .put("token", deviceToken)
+            .put("stream_id", streamId)
+            // العمود VARCHAR(120): نقتطع هنا فلا يُرفض الصفّ عند الخادم بصمت.
+            .put("player_error", playerError.take(120))
+            .put("app_version", BuildConfig.VERSION_NAME)
+            .toString()
+            .toRequestBody(JSON)
+
+        val url = BuildConfig.SALAMTV_LOGIN_URL.replace("app_login.php", "app_report_channel.php")
+        val request = Request.Builder()
+            .url(url)
+            .header("Accept", "application/json")
+            .post(payload)
+            .build()
+
+        val text = try {
+            client.newCall(request).execute().use { it.body.string() }
+        } catch (e: IOException) {
+            Log.w(TAG, "report transport failure: ${e.javaClass.simpleName}")
+            return@withContext Result.failure(LoginException(CODE_OFFLINE, ""))
+        }
+
+        val json = runCatching { JSONObject(text) }.getOrElse {
+            return@withContext Result.failure(LoginException(CODE_OFFLINE, ""))
+        }
+        if (!json.optBoolean("ok")) {
+            return@withContext Result.failure(LoginException("refused", json.optString("message")))
+        }
+        Result.success(ReportOutcome(json.optString("message"), json.optString("verdict")))
     }
 
     /**
