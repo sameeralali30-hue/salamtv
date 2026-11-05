@@ -141,8 +141,4 @@
     <string name="phone_browse">تصفّح</string>
     <string name="phone_close">إغلاق</string>
     <string name="phone_cancel">إلغاء</string>
-    <!-- بلاغٌ عن قناةٍ معطّلة من شاشة خطأ التشغيل. اللوحة تفحص الرابط بنفسها وتجيب. -->
-    <string name="player_report_channel">القناة لا تعمل</string>
-    <string name="player_report_sending">جارٍ الإرسال…</string>
-    <string name="player_report_failed">تعذّر إرسال البلاغ. تحقّق من اتصالك.</string>
 </resources>

@@ -39,9 +39,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.ui.text.style.TextAlign
-import tv.own.owntv.ui.components.OwnTVButtonStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -109,25 +106,6 @@ fun PhonePlayerScreen(
         is PhonePlaying.Movie -> playing.movie.name
         is PhonePlaying.Episode -> stringResource(R.string.phone_episode, playing.episode.episodeNumber, playing.episode.name)
     }
-
-    /* ══ بلاغ «القناة لا تعمل» ══
-       نكهةُ الهاتف لها مشغّلُها الخاصّ ولا تمرّ بـPlayerHud، فالتوصيل يُكرَّر
-       هنا — وهو تكرارُ ثلاثة أسطرٍ من حالةٍ لا تكرارُ منطق: المنطق كلّه في
-       SubscriberLoginClient.reportChannel.
-
-       والزرّ بشرطين: قناةٌ حيّة، ورابطُها يحمل رمز الجهاز (`/d/<token>/`) أي
-       أنّها قناةُ لوحةٍ لا مصدرٌ خارجيّ أضافه المستخدم — فاللوحة لا تعرف تلك
-       ولا تستطيع فحصها. والمفتاح يصفّر الحالة عند تبديل القناة. */
-    val reportChannelRow = (playing as? PhonePlaying.Live)?.channel
-    val reportClient = koinInject<tv.own.owntv.features.setup.SubscriberLoginClient>()
-    val reportScope = rememberCoroutineScope()
-    var reportStatus by remember(reportChannelRow?.id) { mutableStateOf<String?>(null) }
-    val reportSendingText = stringResource(R.string.player_report_sending)
-    val reportFailedText = stringResource(R.string.player_report_failed)
-    val reportableId = reportChannelRow
-        ?.takeIf { "/d/" in it.streamUrl }
-        ?.remoteId?.toIntOrNull()
-        ?: 0
 
     var controls by remember { mutableStateOf(true) }
     var showQuality by remember { mutableStateOf(false) }
@@ -241,19 +219,6 @@ fun PhonePlayerScreen(
                     onClose = onClose, onQuality = { showQuality = true },
                     onSubtitles = if (!isLive) { { showSubs = true } } else null,
                     onAudio = { showAudio = true },
-                    onReportChannel = if (reportableId > 0) { detail: String ->
-                        val url = reportChannelRow?.streamUrl.orEmpty()
-                        reportStatus = reportSendingText
-                        reportScope.launch {
-                            val result = reportClient.reportChannel(url, reportableId, detail)
-                            reportStatus = result.getOrNull()?.message?.takeIf { it.isNotBlank() }
-                                ?: (result.exceptionOrNull()
-                                    as? tv.own.owntv.features.setup.SubscriberLoginClient.LoginException)
-                                    ?.message?.takeIf { it.isNotBlank() }
-                                ?: reportFailedText
-                        }
-                    } else null,
-                    reportStatus = reportStatus,
                     modifier = Modifier.fillMaxSize(),
                 )
                 gestureHint?.let { hint ->
@@ -336,11 +301,6 @@ private fun PhonePlayerChrome(
     onQuality: () -> Unit,
     onSubtitles: (() -> Unit)?,
     onAudio: () -> Unit,
-    // بلاغٌ عن قناةٍ معطّلة — يستقبل تفصيل العطل كما هو، ليُخزَّن في اللوحة.
-    // null = البلاغ غير ممكن هنا (ليست قناةَ لوحةٍ حيّة).
-    onReportChannel: ((String) -> Unit)? = null,
-    // يحلّ محلّ الزرّ بعد الضغط: «جارٍ الإرسال…» ثمّ جوابُ اللوحة نصّاً.
-    reportStatus: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val buffering by engine.buffering.collectAsStateWithLifecycle()
@@ -359,27 +319,6 @@ private fun PhonePlayerChrome(
     if (error != null) {
         Column(Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             OwnTVButton(label = stringResource(R.string.phone_player_retry), icon = OwnTVIcon.REFRESH, onClick = engine::retry)
-            // تحت «إعادة المحاولة» لا مكانه: قناةٌ تبدو ميّتة كثيراً ما تكون تعثّراً
-            // عابراً، ومن يُبلّغ قبل أن يعيد المحاولة لا يعلّم اللوحة شيئاً.
-            onReportChannel?.let { report ->
-                val detail = error?.toString().orEmpty()
-                Spacer(Modifier.height(10.dp))
-                if (reportStatus != null) {
-                    Text(
-                        reportStatus,
-                        color = Color.White.copy(alpha = 0.85f),
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                    )
-                } else {
-                    OwnTVButton(
-                        label = stringResource(R.string.player_report_channel),
-                        icon = OwnTVIcon.WARNING,
-                        style = OwnTVButtonStyle.SECONDARY,
-                        onClick = { report(detail) },
-                    )
-                }
-            }
         }
     }
     if (!visible) return
