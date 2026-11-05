@@ -9,18 +9,6 @@
 > (e.g. `(community PR #40 by @codeVerine)`). Issue numbers that are part of a title (e.g. `(#57)`) are
 > fine; explanatory parentheticals are not. Descriptions belong in CHANGELOG.md, never here.
 
-## v1.0.49
-
-### ✨ New features
-
-- **“Channel not working” button on the playback-error screen**
-- **One free trial per device**
-
-### 🐛 Fixes
-
-- **Device limit now follows the panel's “device limit” field**
-- **Release builds fixed after the flavor rename**
-
 ## v4.2.5 — unreleased
 
 ### ✨ New features
