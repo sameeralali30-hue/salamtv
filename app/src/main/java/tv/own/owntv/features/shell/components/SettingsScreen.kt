@@ -2102,17 +2102,12 @@ private fun FocusHighlightDialog(
 }
 
 
-/**
- * Operator support channel, injected at build time; blank hides the whole block.
+/* [SALAMTV] لا قناةَ دعمٍ في «حول» — طُلب رفعها.
  *
- * It used to be upstream's own Telegram group. Left in place, every subscriber who opened About and
- * needed help would have walked into a stranger's community asking about a subscription nobody
- * there sold them. Showing nothing is strictly better than showing the wrong address.
+ * قناة الدعم باقيةٌ حيث تُطلب فعلاً: شاشة الدخول وشاشة الحساب تقرآن
+ * BuildConfig.SALAMTV_SUPPORT_URL وSALAMTV_WHATSAPP بنفسيهما. «حول» شاشةُ
+ * تعريفٍ لا شاشةُ تواصل.
  */
-private val SUPPORT_LINK = tv.own.owntv.BuildConfig.SALAMTV_SUPPORT_URL
-
-/** رقم واتساب، بصيغة يقرؤها الإنسان لا رابطاً — لا متصفّح على التلفاز. */
-private val WHATSAPP_LINK = tv.own.owntv.BuildConfig.SALAMTV_WHATSAPP
 
 /** About OwnTV: version, license, author and project link — all readable on screen (no TV browser). */
 @Composable
@@ -2132,13 +2127,9 @@ private fun AboutDialog(onDismiss: () -> Unit) {
             BrandLockup(markSize = 48, textSize = 30)
             Spacer(Modifier.height(6.dp))
             Text(stringResource(R.string.settings_about_version, tv.own.owntv.BuildConfig.VERSION_NAME), style = MaterialTheme.typography.titleMedium, color = colors.primary)
-            Spacer(Modifier.height(14.dp))
-            Text(
-                stringResource(R.string.settings_about_description_full),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
+            /* [SALAMTV] لا وصفَ «تطبيق مجاني ومفتوح المصدر… لا يوفّر قنوات» —
+               نصُّ المنبع يخاطب من يأتي بمصادره بنفسه، والمشترك هنا يدفع
+               لنا ونحن نسلّمه القنوات. فكان يناقض ما يراه في التطبيق. */
             Spacer(Modifier.height(14.dp))
             Text(stringResource(R.string.settings_about_license), style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
             Spacer(Modifier.height(16.dp))
@@ -2157,33 +2148,6 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                 color = colors.onSurfaceVariant,
             )
 
-            if (SUPPORT_LINK.isNotBlank()) {
-                Spacer(Modifier.height(16.dp))
-                // القارئ على التلفاز لا متصفّح لديه: الرمز يُمسح بالهاتف.
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.salamtv_support), style = MaterialTheme.typography.titleSmall, color = colors.onSurface)
-                        Spacer(Modifier.height(2.dp))
-                        Text(SUPPORT_LINK, style = MaterialTheme.typography.bodyMedium, color = colors.primary)
-                        if (WHATSAPP_LINK.isNotBlank()) {
-                            Spacer(Modifier.height(4.dp))
-                            Text(WHATSAPP_LINK, style = MaterialTheme.typography.bodyMedium, color = colors.primary)
-                        }
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            stringResource(R.string.salamtv_support_scan),
-                            style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
-                        )
-                    }
-                    Box(Modifier.clip(RoundedCornerShape(10.dp)).background(Color.White).padding(6.dp)) {
-                        Image(
-                            painter = androidx.compose.ui.res.painterResource(tv.own.owntv.R.drawable.support_qr),
-                            contentDescription = stringResource(R.string.salamtv_support_qr),
-                            modifier = Modifier.size(120.dp),
-                        )
-                    }
-                }
-            }
             Spacer(Modifier.height(20.dp))
             OwnTVButton(stringResource(R.string.settings_close), onClick = onDismiss, modifier = Modifier.focusRequester(focus))
         }
