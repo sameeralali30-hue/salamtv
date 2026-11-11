@@ -2133,19 +2133,17 @@ private fun AboutDialog(onDismiss: () -> Unit) {
             Spacer(Modifier.height(14.dp))
             Text(stringResource(R.string.settings_about_license), style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
             Spacer(Modifier.height(16.dp))
-            // Who made it, first and readable; then the upstream credit in small print — this is a
-            // fork and GPL-3 asks that the origin stay visible, but a subscriber must not mistake
-            // OwnTV's project for our support desk.
+            /* [SALAMTV] لا سطرَ «مبنيّ على مشروع OwnTV» — طُلب رفعه.
+             *
+             * ⚠ يبقى إعلانُ الترخيص أعلاه («ترخيص GPLv3»)، وهو ما يدلّ على
+             *   أنّ للمشترك حقّ طلب المصدر. ونصُّ GPL-3 كاملاً ما زال في
+             *   LICENSE داخل المستودع، وإشعاراتُ حقوق المنبع في رؤوس
+             *   ملفّاته لم تُمسّ — الحذف من شاشةِ عرضٍ واحدة لا من الكود.
+             */
             Text(
                 stringResource(R.string.salamtv_developed_by, java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurface,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                stringResource(R.string.salamtv_based_on),
-                style = MaterialTheme.typography.labelSmall,
-                color = colors.onSurfaceVariant,
             )
 
             Spacer(Modifier.height(20.dp))
