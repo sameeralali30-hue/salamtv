@@ -103,7 +103,7 @@ android {
         // not a code edit.
         val loginUrl = System.getenv("SALAMTV_LOGIN_URL")
             ?: providers.gradleProperty("salamtv.loginUrl").orNull
-            ?: "https://app.mohamedalalichatbot.xyz/iptv/app_login.php"
+            ?: "https://app.slmnet.net/iptv/app_login.php"
         buildConfigField("String", "SALAMTV_LOGIN_URL", "\"$loginUrl\"")
 
         // ── SalamTV: in-app updates ──
@@ -113,7 +113,7 @@ android {
         // link on our own domain.
         val updateUrl = System.getenv("SALAMTV_UPDATE_URL")
             ?: providers.gradleProperty("salamtv.updateUrl").orNull
-            ?: "https://app.mohamedalalichatbot.xyz/iptv/app-update"
+            ?: "https://app.slmnet.net/iptv/app-update"
         buildConfigField("String", "SALAMTV_UPDATE_URL", "\"$updateUrl\"")
 
         // ── SalamTV: identity shown in About ──
@@ -130,8 +130,16 @@ android {
             ?: ""
         buildConfigField("String", "SALAMTV_WHATSAPP", "\"$waNumber\"")
 
-        // Public source, as GPL-3 requires of anyone who hands out the APK.
-        buildConfigField("String", "SALAMTV_SOURCE_URL", "\"github.com/sameeralali30-hue/salamtv\"")
+        // [SALAMTV] لا رابطَ للمستودع في التطبيق — طُلب إخفاؤه عن المشترك.
+        //
+        // ولا يُكتفى بحذف السطر من شاشة «حول»: حقلُ BuildConfig يُجمَّع داخل
+        // الـAPK، فيبقى العنوان نصّاً ظاهراً لـ`strings` أو apktool. فحُذف
+        // المصدر نفسه.
+        //
+        // ⚠ وواجبُ GPL-3 لا يسقط بإخفاء الرابط: من سلّمتَه الـAPK له حقُّ
+        //   طلب المصدر، والإسنادُ باقٍ في الشاشة («GPLv3 License» و«Built on
+        //   the open-source OwnTV project»). فاحفظ سبيلاً لتسليم المصدر عند
+        //   الطلب — رابطٌ خاصّ أو نسخةٌ تُرسَل.
 
         // Locked mode: the subscriber signs in, and never picks a server or adds a playlist.
         // Off in a build with no login URL, so the upstream player behaviour still works.

@@ -2102,9 +2102,6 @@ private fun FocusHighlightDialog(
 }
 
 
-/** Our source, as GPL-3 requires us to point recipients at. */
-private val GITHUB_REPO = tv.own.owntv.BuildConfig.SALAMTV_SOURCE_URL
-
 /**
  * Operator support channel, injected at build time; blank hides the whole block.
  *
@@ -2144,8 +2141,6 @@ private fun AboutDialog(onDismiss: () -> Unit) {
             )
             Spacer(Modifier.height(14.dp))
             Text(stringResource(R.string.settings_about_license), style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
-            Spacer(Modifier.height(4.dp))
-            Text(GITHUB_REPO, style = MaterialTheme.typography.bodyMedium, color = colors.primary)
             Spacer(Modifier.height(16.dp))
             // Who made it, first and readable; then the upstream credit in small print — this is a
             // fork and GPL-3 asks that the origin stay visible, but a subscriber must not mistake
